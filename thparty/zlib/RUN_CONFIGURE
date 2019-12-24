@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Remove trailing '-'
+CHOST=${CROSS_COMPILE%-}
+
+TARGET=$*
+TARGET=`echo ${TARGET} | sed 's/\-\-host=.* //'`
+
+if [ ! -f Makefile ]; then
+    CHOST=$CHOST ./configure --static ${TARGET}
+fi

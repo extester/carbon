@@ -1,0 +1,7 @@
+#!/bin/sh
+
+set -e
+
+make install
+mkdir -p ${PREFIX}/include/sqlite
+mv -f ${PREFIX}/include/sqlite*.h ${PREFIX}/include/sqlite/

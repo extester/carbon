@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+#	all clean '' install
+#
+
+make $@ CC=${CROSS_COMPILE}gcc LDSHARED=${CROSS_COMPILE}gcc CPP="${CROSS_COMPILE}gcc -E" \
+	AR=${CROSS_COMPILE}ar RUNLIB=${CROSS_COMPILE}ranlib LDCONFIG=${CROSS_COMPILE}ldconfig
+
+for opt in "$@"; do
+    if [ "x$opt" = "xclean" -o "x$opt" = "xdistclean" ]; then
+	rm Makefile
+	break
+    fi
+done
+

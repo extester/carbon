@@ -1,0 +1,14 @@
+
+/.idea
+/.svn
+/backend/freertos/Source
+/backend/tneo/tneo
+/build
+/cmake-build-debug
+/example/stm32f10x
+
+/CMakeLists.txt
+/config.mak
+/docum/carbon.docx
+/docum/carbon-style-guide.docx
+/docum/carbon-style-guide.pdf

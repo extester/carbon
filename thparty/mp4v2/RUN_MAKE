@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+#	all clean '' install
+
+set -e
+
+if [ ! -d build ]; then
+    exit 0
+fi
+
+cd build
+
+TARGET="$@"
+
+for opt in "$@"; do
+    if [ "x$opt" = "xclean" ]; then
+	TARGET="clean distclean"
+	break
+    fi
+done
+
+make ${TARGET} 
+
+if [ "x$TARGET" = "xclean distclean" ]; then
+    cd ../
+    rm -rf ./build
+fi

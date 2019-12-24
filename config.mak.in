@@ -1,0 +1,105 @@
+#
+#   Custom carbon configuration file
+#
+#   Copyright (c) 2013-2019 Softland. All rights reserved.
+#   Licensed under the Apache License, Version 2.0
+#
+#   Revision history:
+#
+#   Revision 1.0, 28.06.2013
+#
+#   Revision 2.0, 20.12.2019 22:35:31
+#	Disabled by default all the external packages.
+#
+
+#
+# Carbon module dependencies
+#
+MODULE_DEP +=
+
+#
+# Carbon third party library dependencies
+#
+THPARTY_DEP += 
+
+#
+# Options
+#
+
+# Carbon Object's member functions: void dump(const char* strPref)
+# Default is ON for DEBUG, OFF for RELEASE
+#CARBON_DEBUG_DUMP=1
+
+
+# Carbon event debugging support: event names, etc.
+# Default is ON for DEBUG, OFF for RELEASE
+#CARBON_DEBUG_EVENT=1
+
+# Carbon Object new/delete tracker
+# Default is ON for DEBUG, OFF for RELEASE
+#CARBON_DEBUG_TRACK_OBJECT=1
+
+# Carbon assertion
+# Default is ON for DEBUG, OFF for RELEASE
+#CARBON_DEBUG_ASSERT=1
+
+
+################################################################################
+ifeq ($(CARBON_MACHINE), unix)
+#
+# UNIX specific custom options
+#
+
+CARBON_JEMALLOC=0
+CARBON_UDNS=1
+CARBON_JANSSON=1
+CARBON_XML=1
+CARBON_ZLIB=1
+
+# Carbon object name buffer length (CObject, CEvent, CTimer, CThread)
+# Default is 48
+#CARBON_OBJECT_NAME_LENGTH=48
+
+# Logger string buffer length
+# Default is 384
+#CARBON_LOGGER_BUFFER_LENGTH=384
+
+MODULE_DEP += contact net_media vep
+
+
+################################################################################
+else
+ifeq ($(CARBON_MACHINE), embed)
+#
+# EMBED specific custom options
+#
+
+# Carbon object name buffer length (CObject, CEvent, CTimer, CThread)
+# Default is 16
+#CARBON_OBJECT_NAME_LENGTH=16
+
+# Logger string buffer length
+# Default is 128
+#CARBON_LOGGER_BUFFER_LENGTH=128
+
+CARBON_DEBUG_DUMP=0
+CARBON_DEBUG_EVENT=0
+CARBON_DEBUG_OBJECT_TRACK=0
+
+CARBON_TIMER_COUNT=2
+CARBON_EVENT_COUNT=2
+
+# Carbon worker maxumum thread count
+# Default is 2
+#CARBON_THREAD_COUNT=2
+
+# Carbon worker thread stack size (bytes or words depend of backend)
+CARBON_THREAD_STACK_SIZE=256
+
+# Carbon worker thread priority (depands on backend)
+#CARBON_THREAD_PRIORITY=6
+
+#CARBON_DEBUG_ASSERT=0
+
+endif
+endif

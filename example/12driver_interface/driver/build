@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+#   Carbon Framework example
+#   Example kernel driver build script
+#
+#   Copyright (c) 2017 Softland. All rights reserved.
+#   Licensed under the Apache License, Version 2.0
+#
+#   Revision history:
+#
+#   Revision 1.0, 27.01.2017 18:25:37
+#	Initial revision.
+#
+#   make [all|clean|r]
+#
+
+KERNEL=/usr/src/linux-headers-3.16.0-4-amd64
+
+if [ "x$1" = "xr" ]; then
+    make ARCH=arm -C $KERNEL M=`pwd` clean
+    make ARCH=arm -C $KERNEL M=`pwd`
+elif [ "x$1" = "xclean" ]; then
+    make ARCH=arm -C $KERNEL M=`pwd` clean
+else
+    make ARCH=arm -C $KERNEL M=`pwd`
+fi
+
+
+

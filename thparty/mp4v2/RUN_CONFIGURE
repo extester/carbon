@@ -1,0 +1,8 @@
+#!/bin/sh
+
+mkdir -p build
+cd build
+
+if [ ! -f GNUmakefile ]; then 
+    ../configure $* --disable-shared --disable-gch --disable-util
+fi
