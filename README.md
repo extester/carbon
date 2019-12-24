@@ -13,6 +13,14 @@ in the embedded development. The component library contains:
 - HTTP protocol;
 - RTP/RTSP/RTCP/SDP protocols;
 
+#### Compiling carbon
+
+Copy config.mak.in to config.mak and run make.
+
+If you have the problems compiling jansson package:
+- Make sure you have installed autoconf and libtool packages;
+- Cd to thparty/jansson and run autoreconf -f -i
+
 #### Learning Carbon
 
 Framework contains a full set of example code and documentation (in russian so far).
