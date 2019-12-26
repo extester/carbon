@@ -134,25 +134,14 @@ void CApplication::initEvent()
  */
 void CApplication::initLogger()
 {
+	/* Tracing logs are disabled by default */
+	logger_disable(LT_TRACE|L_ALL);
+
 	logger_disable(LT_ALL|L_EV_TRACE_EVENT);
 	logger_disable(LT_ALL|L_EV_TRACE_TIMER);
-
-	logger_disable(LT_ALL|L_ICMP_FL);
-	logger_disable(LT_ALL|L_NET_FL);
-
-	logger_disable(LT_ALL|L_GEN_FL);
-	logger_disable(LT_ALL|L_SOCKET_FL);
-	logger_disable(LT_ALL|L_FILE_FL);
-
 	logger_disable(LT_ALL|L_NETCONN_IO);
-	logger_disable(LT_ALL|L_NETCONN_FL);
-
 	logger_disable(LT_ALL|L_NETSERV_IO);
-	logger_disable(LT_ALL|L_NETSERV_FL);
 	logger_disable(LT_ALL|L_NETCLI_IO);
-	logger_disable(LT_ALL|L_NETCLI_FL);
-
-	logger_disable(LT_ALL|L_HTTP_CONT_FL);
 }
 
 /*

@@ -123,7 +123,7 @@ result_t CNetServer::processClient(CSocketRef* pSocket)
     if ( count < m_nMaxConnection )  {
         CNetServerConnection*   pConnection;
 
-        log_debug(L_NETSERV_FL, "[netserv] accepted client\n");
+		log_trace(L_NETSERV, "[netserv] accepted client\n");
         pConnection = createConnection(pSocket);
         if ( pConnection )  {
             CEvent*     pEvent;

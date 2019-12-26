@@ -113,7 +113,7 @@ result_t CRtcpClient::validatePacket(void* pData, size_t* pLength) const
 	end = p+length;
 
 	if ( length < sizeof(rtcp_head_t) )  {
-		log_debug(L_RTCP_FL, "[rtcp_cli] compound packet too short (%d)!\n", length);
+		log_trace(L_RTCP, "[rtcp_cli] compound packet too short (%d)!\n", length);
 		return EINVAL;
 	}
 
@@ -123,14 +123,14 @@ result_t CRtcpClient::validatePacket(void* pData, size_t* pLength) const
 		pPacket->h.head = ntohl(pPacket->h.head);
 		next = p + sizeof(rtcp_head_t) + RTCP_HEAD_LENGTH(pPacket->h.head)*sizeof(uint32_t);
 		if ( next > end )  {
-			log_debug(L_RTCP_FL, "[rtcp_cli] i=%u: compound packet too short1!\n", compoundCount);
+			log_trace(L_RTCP, "[rtcp_cli] i=%u: compound packet too short1!\n", compoundCount);
 			nresult = EINVAL;
 			break;
 		}
 
 		hh = pPacket->h.head;
 		if ( RTCP_HEAD_VERSION(hh) != RTCP_VERSION )  {
-			log_debug(L_RTCP_FL, "[rtcp_cli] i=%u: invalid packet version %d, extected %d\n",
+			log_trace(L_RTCP, "[rtcp_cli] i=%u: invalid packet version %d, extected %d\n",
 					  compoundCount, RTCP_HEAD_VERSION(hh), RTCP_VERSION);
 			nresult = EINVAL;
 			break;
@@ -144,7 +144,7 @@ result_t CRtcpClient::validatePacket(void* pData, size_t* pLength) const
 			case RTCP_PACKET_SR:
 				l = sizeof(rtcp_sr_packet_t)-sizeof(rtcp_head_t)+ic*sizeof(rtcp_report_block_t);
 				if ( l > len )  {
-					log_debug(L_RTCP_FL, "[rtcp_cli] i=%u: sr packet length too short\n", compoundCount);
+					log_trace(L_RTCP, "[rtcp_cli] i=%u: sr packet length too short\n", compoundCount);
 					nresult = EINVAL;
 					break;
 				}
@@ -164,7 +164,7 @@ result_t CRtcpClient::validatePacket(void* pData, size_t* pLength) const
 			case RTCP_PACKET_RR:
 				l = sizeof(rtcp_rr_packet_t)-sizeof(rtcp_head_t)+ic*sizeof(rtcp_report_block_t);
 				if ( l > len )  {
-					log_debug(L_RTCP_FL, "[rtcp_cli] i=%d: rr packet length too short (l=%u, len=%u)\n",
+					log_trace(L_RTCP, "[rtcp_cli] i=%d: rr packet length too short (l=%u, len=%u)\n",
 							  compoundCount, l, len);
 					nresult = EINVAL;
 					break;
@@ -185,7 +185,7 @@ result_t CRtcpClient::validatePacket(void* pData, size_t* pLength) const
 					pSdesData = (rtcp_sdes_data_t*)(p+sizeof(rtcp_head_t)+l);
 
 					if ( (l+sizeof(pSdesData->ssrc)) >= len ) {
-						log_debug(L_RTCP_FL, "[rtcp_cli] i=%d: sdes packet too short1\n", compoundCount);
+						log_trace(L_RTCP, "[rtcp_cli] i=%d: sdes packet too short1\n", compoundCount);
 						nresult = EINVAL;
 						break;
 					}
@@ -196,7 +196,7 @@ result_t CRtcpClient::validatePacket(void* pData, size_t* pLength) const
 
 					while ( l < len )  {
 						if ( (l+1) > len ) {
-							log_debug(L_RTCP_FL, "[rtcp_cli] i=%d: sdes packet too short2\n", compoundCount);
+							log_trace(L_RTCP, "[rtcp_cli] i=%d: sdes packet too short2\n", compoundCount);
 							nresult = EINVAL;
 							break;
 						}
@@ -208,7 +208,7 @@ result_t CRtcpClient::validatePacket(void* pData, size_t* pLength) const
 						}
 
 						if ( (l+1) > len ) {
-							log_debug(L_RTCP_FL, "[rtcp_cli] i=%d: sdes packet too short3\n", compoundCount);
+							log_trace(L_RTCP, "[rtcp_cli] i=%d: sdes packet too short3\n", compoundCount);
 							nresult = EINVAL;
 							break;
 						}
@@ -217,7 +217,7 @@ result_t CRtcpClient::validatePacket(void* pData, size_t* pLength) const
 						sdes_len = *(s+1);
 
 						if ( (l+sdes_len) > len )  {
-							log_debug(L_RTCP_FL, "[rtcp_cli] i=%d: sdes packet too short4\n", compoundCount);
+							log_trace(L_RTCP, "[rtcp_cli] i=%d: sdes packet too short4\n", compoundCount);
 							nresult = EINVAL;
 							break;
 						}
@@ -235,7 +235,7 @@ result_t CRtcpClient::validatePacket(void* pData, size_t* pLength) const
 			case RTCP_PACKET_BYE:
 				l = sizeof(rtcp_bye_packet_t)-sizeof(rtcp_head_t)+ic*sizeof(uint32_t);
 				if ( l > len )  {
-					log_debug(L_RTCP_FL, "[rtcp_cli] i=%d: bye packet length too short\n", compoundCount);
+					log_trace(L_RTCP, "[rtcp_cli] i=%d: bye packet length too short\n", compoundCount);
 					nresult = EINVAL;
 					break;
 				}
@@ -250,7 +250,7 @@ result_t CRtcpClient::validatePacket(void* pData, size_t* pLength) const
 					s = (char*)p+l;
 
 					if ( l+1+(*s) > len )  {
-						log_debug(L_RTCP_FL, "[rtcp_cli] i=%d: bye packet reason length too short\n",
+						log_trace(L_RTCP, "[rtcp_cli] i=%d: bye packet reason length too short\n",
 								  compoundCount);
 						nresult = EINVAL;
 						break;
@@ -262,7 +262,7 @@ result_t CRtcpClient::validatePacket(void* pData, size_t* pLength) const
 			case RTCP_PACKET_APP:
 				l = sizeof(rtcp_app_packet_t)-sizeof(rtcp_head_t);
 				if ( l > len )  {
-					log_debug(L_RTCP_FL, "[rtcp_cli] i=%d: app packet length too short\n", compoundCount);
+					log_trace(L_RTCP, "[rtcp_cli] i=%d: app packet length too short\n", compoundCount);
 					nresult = EINVAL;
 					break;
 				}
@@ -272,7 +272,7 @@ result_t CRtcpClient::validatePacket(void* pData, size_t* pLength) const
 				break;
 
 			default:
-				log_debug(L_RTCP_FL, "[rtcp_cli] i=%d: unknown packet type %d\n",
+				log_trace(L_RTCP, "[rtcp_cli] i=%d: unknown packet type %d\n",
 						  compoundCount, RTCP_HEAD_PACKET_TYPE(hh));
 				nresult = EINVAL;
 		}
@@ -292,7 +292,7 @@ result_t CRtcpClient::validatePacket(void* pData, size_t* pLength) const
 			*pLength = length-(*pPadCount);
 		}
 		else {
-			log_debug(L_RTCP_FL, "[rtcp_cli] padding wrong (%d bytes)\n", *pPadCount);
+			log_trace(L_RTCP, "[rtcp_cli] padding wrong (%d bytes)\n", *pPadCount);
 			nresult = EINVAL;
 		}
 	}
@@ -343,7 +343,7 @@ void CRtcpClient::processPacket(void* pData, size_t length)
 	int 				type;
 	result_t			nresult;
 
-	log_debug(L_RTCP_FL, "[rtcp_cli] RECEIVED A PACKET (%d bytes)\n", (int)length);
+	log_trace(L_RTCP, "[rtcp_cli] RECEIVED A PACKET (%d bytes)\n", (int)length);
 
 	rlength = length;
 	nresult = validatePacket(pData, &rlength);
@@ -375,7 +375,7 @@ void CRtcpClient::processPacket(void* pData, size_t length)
 				break;
 
 			default:
-				log_debug(L_RTCP_FL, "[rtcp_cli] received an unknown RTCP packet type %d\n", type);
+				log_trace(L_RTCP, "[rtcp_cli] received an unknown RTCP packet type %d\n", type);
 		}
 
 		pPacket = (union rtcp_packet*)(((uint8_t*)pPacket)+(RTCP_HEAD_LENGTH(pPacket->h.head)+1)*sizeof(uint32_t));
@@ -546,7 +546,7 @@ void CRtcpClient::rrTimerHandler(void* p)
 //	shell_assert(validatePacket(buf, &len) == 0);
 //dumpRtcpCompoundPacket(buf, length);}
 
-		log_debug(L_RTCP_FL, "[rtcp_cli] sending RTCP packet to %s..\n", (const char*)servAddr);
+		log_trace(L_RTCP, "[rtcp_cli] sending RTCP packet to %s..\n", (const char*)servAddr);
 		nresult = m_netConn.sendSync(pContainer, servAddr);
 		if ( nresult == ESUCCESS ) {
 			counter_inc(m_nRrSentPackets);

@@ -49,20 +49,16 @@
 
 #define L_SHELL					32			/* First shell library available channel */
 
-#define L_GEN_FL				(L_SHELL+0)
-#define L_SOCKET				(L_SHELL+1)
-#define L_SOCKET_FL				(L_SHELL+2)
-#define L_FILE					(L_SHELL+3)
-#define L_FILE_FL				(L_SHELL+4)
-#define L_MIO					(L_SHELL+5)
-#define L_NET_FL				(L_SHELL+6)
-#define L_ICMP					(L_SHELL+7)
-#define L_ICMP_FL				(L_SHELL+8)
-#define L_EV_TRACE_TIMER		(L_SHELL+9)
-#define L_EV_TRACE_EVENT		(L_SHELL+10)
-#define L_BOOT					(L_SHELL+11)
-#define L_DB					(L_SHELL+12)
-#define L_DB_SQL_TRACE			(L_SHELL+13)
+#define L_SOCKET				(L_SHELL+0)
+#define L_FILE					(L_SHELL+1)
+#define L_MIO					(L_SHELL+2)
+#define L_NET					(L_SHELL+3)
+#define L_ICMP					(L_SHELL+4)
+#define L_EV_TRACE_TIMER		(L_SHELL+5)
+#define L_EV_TRACE_EVENT		(L_SHELL+6)
+#define L_BOOT					(L_SHELL+7)
+#define L_DB					(L_SHELL+8)
+#define L_DB_SQL_TRACE			(L_SHELL+9)
 
 #define L_SHELL_USER			(L_DB_SQL_TRACE+1)
 
@@ -162,11 +158,6 @@ extern void logger_set_format_time(unsigned int type, const char* strFormat);
 
 extern void logger_write(unsigned int type_channel, const char* strFilename, int line,
 						 const char* strFunction, const void* pData, int length, const char* strMessage, ...);
-
-//static inline void logger_write(unsigned int type_channel, const char* strFilename, int line,
-//						 const char* strFunction, const void* pData, int length, const char* strMessage, ...)
-//{
-//}
 
 extern result_t logger_get_channel(int nIndex, void* pBuffer, size_t length);
 extern result_t logger_remove_appender(appender_handle_t hAppender);

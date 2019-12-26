@@ -728,9 +728,9 @@ void* CEventLoopThread::thread(CThread* pThread, void* pData)
 
     pThread->bootCompleted(ESUCCESS);
 
-    log_debug(L_GEN_FL, "[eventloop_th(%s)] starting eventloop\n", getName());
+    log_trace(L_GEN, "[eventloop_th(%s)] starting eventloop\n", getName());
     runEventLoop();
-    log_debug(L_GEN_FL, "[eventloop_th(%s)] stopped eventloop\n", getName());
+    log_trace(L_GEN, "[eventloop_th(%s)] stopped eventloop\n", getName());
 
     return NULL;
 }

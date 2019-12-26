@@ -261,7 +261,7 @@ void CMediaClient::connect(const CNetAddr& rtspServerAddr, const char* strServer
 		return;
 	}
 
-	log_debug(L_NET_MEDIA_FL, "[media_cli(%s)] connecting to RTSP server %s (%s)\n",
+	log_trace(L_NET_MEDIA, "[media_cli(%s)] connecting to RTSP server %s (%s)\n",
 			  	getName(), rtspServerAddr.c_str(), strServerUrl);
 
 	m_serverAddr = CNetHost((ip_addr_t)rtspServerAddr);
@@ -288,13 +288,13 @@ void CMediaClient::configureNext()
 			int 				nMediaIndex;
 
 			if ( pd->isEnabled() )  {
-				log_debug(L_NET_MEDIA_FL, "[media_cli(%s)] configuring channel #%u (id=%u)...\n",
+				log_trace(L_NET_MEDIA, "[media_cli(%s)] configuring channel #%u (id=%u)...\n",
 						  	getName(), i, pd->getId());
 
 				pd->reset();
 				nMediaIndex = m_rtsp.initChannel(pd);
 				if ( nMediaIndex != RTSP_MEDIA_INDEX_UNDEF ) {
-					log_debug(L_NET_MEDIA_FL, "[media_cli(%s)] channel #%u (id=%u): media found (index %d)\n",
+					log_trace(L_NET_MEDIA, "[media_cli(%s)] channel #%u (id=%u): media found (index %d)\n",
 							  	getName(), i, pd->getId(), nMediaIndex);
 
 					nr = pd->enableRtp();
@@ -455,7 +455,7 @@ void CMediaClient::disconnect()
 	} else if ( fsm == CLIENT_FSM_DISCONNECTING )  {
 		log_debug(L_NET_MEDIA, "[media_cli(%s)] already disconnecting\n", getName());
 	} else {
-		log_debug(L_NET_MEDIA_FL, "[media_cli(%s)] disconnecting\n", getName());
+		log_trace(L_NET_MEDIA, "[media_cli(%s)] disconnecting\n", getName());
 		disableRtcp();
 		disableRtp();
 		setFsmState(CLIENT_FSM_DISCONNECTING);
@@ -473,7 +473,7 @@ void CMediaClient::onRtspConnect(CRtspClient* pRtspClient, result_t nresult)
 	fsm_t	fsm = getFsmState();
 
 	if ( fsm == CLIENT_FSM_CONNECTING ) {
-		log_debug(L_NET_MEDIA_FL, "[media_cli(%s)] connected RTSP server, result: %d\n",
+		log_trace(L_NET_MEDIA, "[media_cli(%s)] connected RTSP server, result: %d\n",
 				  	getName(), nresult);
 
 		setFsmState(nresult == ESUCCESS ? CLIENT_FSM_CONNECTED : CLIENT_FSM_NONE);
@@ -498,7 +498,7 @@ void CMediaClient::onRtspConfigure(CRtspClient* pRtspClient, result_t nresult)
 		}
 
 		if ( nresult == ESUCCESS ) {
-			log_debug(L_NET_MEDIA_FL, "[media_cli(%s)] configured client %u (id=%u)\n",
+			log_trace(L_NET_MEDIA, "[media_cli(%s)] configured client %u (id=%u)\n",
 					  	getName(), m_asyncChannelIndex, id);
 		}
 		else {
@@ -524,7 +524,7 @@ void CMediaClient::onRtspPlay(CRtspClient* pRtspClient, result_t nresult)
 	fsm_t	fsm = getFsmState();
 
 	if ( fsm == CLIENT_FSM_PLAYING )  {
-		log_debug(L_NET_MEDIA_FL, "[media_cli(%s)] playback result: %d\n", getName(), nresult);
+		log_trace(L_NET_MEDIA, "[media_cli(%s)] playback result: %d\n", getName(), nresult);
 
 		setFsmState(nresult == ESUCCESS ? CLIENT_FSM_PLAYBACK : CLIENT_FSM_CONFIGURED);
 		m_pParent->onMediaClientPlay(this, nresult);
@@ -539,7 +539,7 @@ void CMediaClient::onRtspPause(CRtspClient* pRtspClient, result_t nresult)
 	fsm_t	fsm = getFsmState();
 
 	if ( fsm == CLIENT_FSM_PAUSING )  {
-		log_debug(L_NET_MEDIA_FL, "[media_cli(%s)] pause result: %d\n", getName(), nresult);
+		log_trace(L_NET_MEDIA, "[media_cli(%s)] pause result: %d\n", getName(), nresult);
 
 		setFsmState(CLIENT_FSM_CONFIGURED);
 		m_pParent->onMediaClientPause(this, nresult);
@@ -554,7 +554,7 @@ void CMediaClient::onRtspDisconnect(CRtspClient* pRtspClient, result_t nresult)
 	fsm_t	fsm = getFsmState();
 
 	if ( fsm == CLIENT_FSM_DISCONNECTING )  {
-		log_debug(L_NET_MEDIA_FL, "[media_cli(%s)] disconnected, result: %d\n", getName(), nresult);
+		log_trace(L_NET_MEDIA, "[media_cli(%s)] disconnected, result: %d\n", getName(), nresult);
 
 		reset();
 		setFsmState(CLIENT_FSM_NONE);
@@ -581,7 +581,7 @@ result_t CMediaClient::init()
 
 	shell_assert(!m_pReceiverPool->isReceiving());
 
-	log_debug(L_NET_MEDIA_FL, "[media_cli(%s)] initialising (host %s)\n",
+	log_trace(L_NET_MEDIA, "[media_cli(%s)] initialising (host %s)\n",
 			  	getName(), m_selfHost.c_str());
 
 	reset();
@@ -607,7 +607,7 @@ void CMediaClient::terminate()
 {
 	fsm_t	fsm = getFsmState();
 
-	log_debug(L_NET_MEDIA_FL, "[media_cli(%s)] terminating (host %s)\n", getName(), m_selfHost.c_str());
+	log_trace(L_NET_MEDIA, "[media_cli(%s)] terminating (host %s)\n", getName(), m_selfHost.c_str());
 
 	shell_assert_ex(fsm == CLIENT_FSM_NONE, "state %d\n", fsm); UNUSED(fsm);
 

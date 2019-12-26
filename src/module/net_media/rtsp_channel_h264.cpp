@@ -161,7 +161,7 @@ boolean_t CRtspChannelH264::getMediaParams(int nMediaIndex, int nProfile, const 
 						  			m_strName.cs(), nMediaIndex, (const char*)strValue);
 				return FALSE;
 			}
-			log_debug(L_RTSP_FL, "[rtsp_h264_ch(%s)] media %d: packetization mode %d\n",
+			log_trace(L_RTSP, "[rtsp_h264_ch(%s)] media %d: packetization mode %d\n",
 					  				m_strName.cs(), nMediaIndex, iValue);
 		}
 
@@ -186,7 +186,7 @@ boolean_t CRtspChannelH264::getMediaParams(int nMediaIndex, int nProfile, const 
 		//log_debug(L_GEN, "[rtsp_h264_ch(%s)] found out-of-band SPROP-PARAMETERS-SETS: '%s'\n", m_strName.cs(), strValue.cs());
 		//log_dump_bin(m_sps, m_nSps, "SPS Data: ");
 		//log_dump_bin(m_pps, m_nPps, "PPS Data: ");
-					log_debug(/*L_GEN,*/ L_RTSP_FL, "[rtsp_h264_ch(%s)] media %d: detected SPS: %d bytes, PPS: %d bytes\n",
+					log_trace(L_RTSP, "[rtsp_h264_ch(%s)] media %d: detected SPS: %d bytes, PPS: %d bytes\n",
 							  		m_strName.cs(), nMediaIndex, m_nSps, m_nPps);
 				}
 			}

@@ -316,7 +316,7 @@ result_t CMp4H264File::create(const char* strFilename)
 	CAutoLock	locker(m_lock);
 	const MP4FileProvider*	pFileProvider;
 
-	log_debug(L_MP4FILE_FL, "[mp4_file] creating file: %s\n", strFilename);
+	log_trace(L_MP4FILE, "[mp4_file] creating file: %s\n", strFilename);
 
 	shell_assert(m_hFile == 0);
 	shell_assert(m_videoTrackId == MP4_INVALID_TRACK_ID);
@@ -355,7 +355,7 @@ result_t CMp4H264File::close()
 	result_t	nresult = ESUCCESS, nr;
 
 	if ( isOpen() ) {
-		log_debug(L_MP4FILE_FL, "[mp4_file] close file: %s\n", getFile());
+		log_trace(L_MP4FILE, "[mp4_file] close file: %s\n", getFile());
 
 		if ( m_videoTrackId != MP4_INVALID_TRACK_ID )  {
 			nresult = doWriteVideoFinalise();

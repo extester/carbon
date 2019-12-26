@@ -223,12 +223,12 @@ void CNetClient::doConnect(const CNetAddr& netAddr, seqnum_t sessId, socket_type
     shell_assert(!m_socket.isOpen());
     m_socket.close();
 
-    log_debug(L_NETCLI_FL, "[netcli(%d)] connecting to %s\n", sessId, netAddr.cs());
+	log_trace(L_NETCLI, "[netcli(%d)] connecting to %s\n", sessId, netAddr.cs());
 
 	if ( netAddr.isValid() )  {
 	    nresult = m_socket.connect(netAddr, hrTimeout, bindAddr, sockType);
 		if ( nresult == ESUCCESS )  {
-			log_debug(L_NETCLI_FL, "[netcli(%d)] connected to %s\n", sessId, netAddr.cs());
+			log_trace(L_NETCLI, "[netcli(%d)] connected to %s\n", sessId, netAddr.cs());
 			statConnect();
 		}
 		else {
@@ -261,12 +261,12 @@ void CNetClient::doConnect(const char* strSocket, seqnum_t sessId, socket_type_t
 	shell_assert(!m_socket.isOpen());
 	m_socket.close();
 
-	log_debug(L_NETCLI_FL, "[netcli(%d)] connecting to %s\n", sessId, strSocket);
+	log_trace(L_NETCLI, "[netcli(%d)] connecting to %s\n", sessId, strSocket);
 
 	nresult = m_socket.connect(strSocket, hrTimeout,
 							   	strBindAddr.isEmpty() ? NULL : strBindAddr, sockType);
 	if ( nresult == ESUCCESS )  {
-		log_debug(L_NETCLI_FL, "[netcli(%d)] connected to %s\n", sessId, strSocket);
+		log_trace(L_NETCLI, "[netcli(%d)] connected to %s\n", sessId, strSocket);
 		statConnect();
 	}
 	else {
@@ -287,7 +287,7 @@ void CNetClient::doConnect(const char* strSocket, seqnum_t sessId, socket_type_t
  */
 void CNetClient::doDisconnect(seqnum_t sessId)
 {
-    log_debug(L_NETCLI_FL, "[netcli] disconnecting\n");
+	log_trace(L_NETCLI, "[netcli] disconnecting\n");
 
     //shell_assert(m_socket.isOpen());
     m_socket.close();
@@ -320,7 +320,7 @@ void CNetClient::doSend(CNetContainer* pContainer, seqnum_t sessId)
     shell_assert(pContainer);
 
     if ( m_socket.isOpen() ) {
-		log_debug(L_NETCLI_FL, "[netcli(%d)] sending a container...\n", sessId);
+		log_trace(L_NETCLI, "[netcli(%d)] sending a container...\n", sessId);
         nresult = pContainer->send(m_socket, hrTimeout);
         if ( nresult == ESUCCESS ) {
 			statSend();
@@ -332,7 +332,7 @@ void CNetClient::doSend(CNetContainer* pContainer, seqnum_t sessId)
 				log_debug(L_NETCLI_IO, "[netcli] <<< Sent container: %s\n", strTmp);
 			}
 			else {
-				log_debug(L_NETCLI_FL, "[netcli(%d)] container sent.\n", sessId);
+				log_trace(L_NETCLI, "[netcli(%d)] container sent.\n", sessId);
 			}
 		}
 		else {
@@ -377,7 +377,7 @@ void CNetClient::doRecv(CNetContainer* pContainer, seqnum_t sessId)
 
     locker.unlock();
     if ( m_socket.isOpen() )  {
-		log_debug(L_NETCLI_FL, "[netcli(%d)] receiving a container...\n", sessId);
+		log_trace(L_NETCLI, "[netcli(%d)] receiving a container...\n", sessId);
 
         nresult = pContainer->receive(m_socket, hrTimeout);
 		if ( nresult == ESUCCESS ) {
@@ -390,7 +390,7 @@ void CNetClient::doRecv(CNetContainer* pContainer, seqnum_t sessId)
 				log_debug(L_NETCLI_IO, "[netcli] >>> Recv container: %s\n", strTmp);
 			}
 			else {
-				log_debug(L_NETCLI_FL, "[netcli(%d)] container received.\n", sessId);
+				log_trace(L_NETCLI, "[netcli(%d)] container received.\n", sessId);
 			}
 		}
 		else {
@@ -437,7 +437,7 @@ void CNetClient::doIo(CNetContainer* pContainer, seqnum_t sessId)
     if ( m_socket.isOpen() )  {
         result_t    nresult;
 
-		log_debug(L_NETCLI_FL, "[netcli(%d)] executing I/O...\n", sessId);
+		log_trace(L_NETCLI, "[netcli(%d)] executing I/O...\n", sessId);
 
         nresult = pContainer->send(m_socket, hrSendTimeout);
         if ( nresult == ESUCCESS )  {
@@ -450,7 +450,7 @@ void CNetClient::doIo(CNetContainer* pContainer, seqnum_t sessId)
 				log_debug(L_NETCLI_IO, "[netcli] <<< I/O sent container: %s\n", strTmp);
 			}
 			else {
-				log_debug(L_NETCLI_FL, "[netcli(%d)] i/o container sent.\n", sessId);
+				log_trace(L_NETCLI, "[netcli(%d)] i/o container sent.\n", sessId);
 			}
 
             pContainer->clear();
@@ -465,7 +465,7 @@ void CNetClient::doIo(CNetContainer* pContainer, seqnum_t sessId)
 					log_debug(L_NETCLI_IO, "[netcli] >>> I/O recv container: %s\n", strTmp);
 				}
 				else {
-					log_debug(L_NETCLI_FL, "[netcli(%d)] container received.\n", sessId);
+					log_trace(L_NETCLI, "[netcli(%d)] container received.\n", sessId);
 				}
 			}
 			else {

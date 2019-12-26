@@ -133,7 +133,7 @@ boolean_t CICmp::checkReply(ping_request_t* pPing, int index) const
         /*
          * Wrong/unknown ICMP packet received
          */
-        log_debug(L_ICMP_FL, "[icmp_io(%d)] %s: ignored unknown packet: id %u (expected %u), "
+		log_trace(L_ICMP, "[icmp_io(%d)] %s: ignored unknown packet: id %u (expected %u), "
                         "seq %u (expected %u) from %s\n",
                         index, m_strTitle, ntohs(pIcmp->icmp_id), pPing->icmpIdent,
                         ntohs(pIcmp->icmp_seq), pPing->icmpSeq,
@@ -142,7 +142,7 @@ boolean_t CICmp::checkReply(ping_request_t* pPing, int index) const
     }
 
     if ( pIcmp->icmp_type != ICMP_ECHOREPLY ) {
-        log_debug(L_ICMP_FL, "[icmp(%d)] %s: wrong ICMP packet type %u received (expected %u) "
+		log_trace(L_ICMP, "[icmp(%d)] %s: wrong ICMP packet type %u received (expected %u) "
                         "from %s, ignored\n", index, m_strTitle,
                         pIcmp->icmp_type, ICMP_ECHOREPLY,
                         (const char*)pPing->dstHost);

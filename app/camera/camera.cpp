@@ -206,7 +206,7 @@ void CCameraApp::onMediaClientDisconnect(CMediaClient* pClient, result_t nresult
 	if ( fsm == CAMERA_FSM_DISCONNECTING ) {
 		log_debug(L_GEN, "[camera] disconnected, result %d\n", nresult);
 
-		if ( logger_is_enabled(LT_DEBUG|L_NET_MEDIA_FL) ) {
+		if ( logger_is_enabled(LT_TRACE|L_NET_MEDIA) ) {
 			pClient->dump();
 		}
 
@@ -239,14 +239,14 @@ void CCameraApp::initLogger()
 {
 	CApplication::initLogger();
 
-	logger_disable(LT_DEBUG|L_RTSP_FL);
-	logger_disable(LT_DEBUG|L_RTCP_FL);
-	logger_disable(LT_DEBUG|L_NET_MEDIA_FL);
+	////logger_disable(LT_DEBUG|L_RTSP_FL);
+	////logger_disable(LT_DEBUG|L_RTCP_FL);
+	////logger_disable(LT_DEBUG|L_NET_MEDIA_FL);
 	//logger_enable(LT_DEBUG|L_NETCONN);
 	//logger_enable(LT_DEBUG|L_NETCONN_IO);
 	//logger_enable(LT_DEBUG|L_NETCONN_FL);
 
-	//logger_disable(LT_DEBUG|L_MP4FILE_FL);
+	logger_enable(LT_TRACE|L_MP4FILE);
 	logger_disable(LT_DEBUG|L_MP4FILE_DYN);
 
 	//logger_enable(LT_DEBUG|L_NETCLI_FL);

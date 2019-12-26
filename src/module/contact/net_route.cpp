@@ -119,7 +119,7 @@ result_t CNetRoute::addRoute(const char* strIface, const CNetHost& destAddr,
 
 	nresult = openSocket(hSocket);
 	if ( nresult == ESUCCESS )  {
-		log_debug(L_NET_ROUTE_FL, "[netroute] adding route: iface: %s, dest: %s, mask: %s, gw: %s\n",
+		log_trace(L_NET_ROUTE, "[netroute] adding route: iface: %s, dest: %s, mask: %s, gw: %s\n",
 				  	strIface, destAddr.c_str(), destMask.c_str(), gwAddr.c_str());
 
 		nresult = doRoute(hSocket, TRUE, strIface, destAddr, gwAddr, destMask);
@@ -157,7 +157,7 @@ result_t CNetRoute::delRoute(const char* strIface, const CNetHost& destAddr,
 
 	nresult = openSocket(hSocket);
 	if ( nresult == ESUCCESS )  {
-		log_debug(L_NET_ROUTE_FL, "[netroute] delete route: iface: %s, dest: %s, mask: %s, gw: %s\n",
+		log_trace(L_NET_ROUTE, "[netroute] delete route: iface: %s, dest: %s, mask: %s, gw: %s\n",
 				  strIface, destAddr.c_str(), destMask.c_str(), gwAddr.c_str());
 
 		nresult = doRoute(hSocket, FALSE, strIface, destAddr, gwAddr, destMask);
@@ -195,7 +195,7 @@ result_t CNetRoute::setDefaultGateway(const char* strIface, const CNetHost& gwAd
 
 	nresult = openSocket(hSocket);
 	if ( nresult == ESUCCESS )  {
-		log_debug(L_NET_ROUTE_FL, "[netroute] adding default route for iface %s: %s\n",
+		log_trace(L_NET_ROUTE, "[netroute] adding default route for iface %s: %s\n",
 				  	strIface, gwAddr.c_str());
 
 		nresult = delDefaultGateway(hSocket);

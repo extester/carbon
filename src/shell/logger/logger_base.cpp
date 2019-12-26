@@ -2,7 +2,7 @@
  *  Shell library
  *  Logger
  *
- *  Copyright (c) 2013-2015 Softland. All rights reserved.
+ *  Copyright (c) 2013-2019 Softland. All rights reserved.
  *  Licensed under the Apache License, Version 2.0
  */
 /*
@@ -23,6 +23,8 @@
  *  Revision 2.0, 25.08.2015 15:17:40
  *  	Separate appenders to the modules.
  *
+ *  Revision 2.1, 25.12.2019 19:18:20
+ *  	Added LT_TRACE log type support.
  */
 /*
  * 	Extra definitions:
@@ -75,7 +77,7 @@
 
 
 #define GET_REAL_TYPES(__types)	\
-	( (__types)==LT_ALL ? (LT_DEBUG|LT_ERROR|LT_WARNING|LT_INFO) : (__types) )
+	( (__types)==LT_ALL ? (LT_DEBUG|LT_ERROR|LT_WARNING|LT_INFO|LT_TRACE) : (__types) )
 
 
 /*******************************************************************************
@@ -176,6 +178,7 @@ CLogger::CLogger()
 	logger_copy_string_impl(m_arLogger[I_ERROR].strType, "ERR", sizeof(m_arLogger[I_ERROR].strType));
 	logger_copy_string_impl(m_arLogger[I_WARNING].strType, "WRN", sizeof(m_arLogger[I_WARNING].strType));
 	logger_copy_string_impl(m_arLogger[I_INFO].strType, "INF", sizeof(m_arLogger[I_INFO].strType));
+	logger_copy_string_impl(m_arLogger[I_TRACE].strType, "TRC", sizeof(m_arLogger[I_TRACE].strType));
 }
 
 CLogger::~CLogger()
@@ -262,7 +265,7 @@ result_t CLogger::removeAppender(appender_handle_t hAppender)
  */
 unsigned int CLogger::i2type(unsigned int index) const
 {
-	static unsigned int	ar[] = { LT_DEBUG, LT_ERROR, LT_WARNING, LT_INFO };
+	static unsigned int	ar[] = { LT_DEBUG, LT_ERROR, LT_WARNING, LT_INFO, LT_TRACE };
 
 	return index < ARRAY_SIZE(ar) ? ar[index] : 0;
 }
@@ -277,7 +280,7 @@ unsigned int CLogger::i2type(unsigned int index) const
  */
 int CLogger::type2i(unsigned int type) const
 {
-	static unsigned int	ar[] = { LT_DEBUG, LT_ERROR, LT_WARNING, LT_INFO };
+	static unsigned int	ar[] = { LT_DEBUG, LT_ERROR, LT_WARNING, LT_INFO, LT_TRACE };
 	size_t				i;
 	int					index = -1;
 
@@ -345,14 +348,14 @@ void CLogger::setFormatTime(unsigned int type, const char* strFormat)
 void CLogger::enable(unsigned int type_channel)
 {
 	unsigned int	i, ch = GET_CHANNEL0(type_channel);
-	int 			lt = GET_REAL_TYPES(GET_TYPES(type_channel));
-	int				index, bit, exc_index, exc_bit;
+	unsigned int 	lt = GET_REAL_TYPES(GET_TYPES(type_channel));
+	unsigned int	index, bit, exc_index, exc_bit;
 
 	exc_index = L_ALWAYS_DISABLED/8;
-	exc_bit = 1 << (L_ALWAYS_DISABLED&7);
+	exc_bit = 1U << (L_ALWAYS_DISABLED&7);
 
 	index = ch/8;
-	bit = 1 << (ch&7);
+	bit = 1U << (ch&7);
 
 	lock();
 	for(i=0; i<LOGGER_TYPES; i++)  {
@@ -381,14 +384,14 @@ void CLogger::enable(unsigned int type_channel)
 void CLogger::disable(unsigned int type_channel)
 {
 	unsigned int	i, ch = GET_CHANNEL0(type_channel);
-	int 			lt = GET_REAL_TYPES(GET_TYPES(type_channel));
-	int				index, bit, exc_index, exc_bit;
+	unsigned int 	lt = GET_REAL_TYPES(GET_TYPES(type_channel));
+	unsigned int	index, bit, exc_index, exc_bit;
 
 	exc_index = L_ALWAYS_ENABLED/8;
-	exc_bit = 1 << (L_ALWAYS_ENABLED&7);
+	exc_bit = 1U << (L_ALWAYS_ENABLED&7);
 
 	index = ch/8;
-	bit = 1 << (ch&7);
+	bit = 1U << (ch&7);
 
 	lock();
 	for(i=0; i<LOGGER_TYPES; i++)  {
@@ -453,12 +456,12 @@ boolean_t CLogger::isEnabled(unsigned int type_channel)
  */
 boolean_t CLogger::isEnabledType(const logger_type_t* pLogger, unsigned int ch) const
 {
-	int 		index, bit;
-	boolean_t	bEnabled = FALSE;
+	unsigned int	index, bit;
+	boolean_t		bEnabled = FALSE;
 
 	if ( ch != 0 )  {
 		index = ch/8;
-		bit = 1 << (ch&7);
+		bit = 1U << (ch&7);
 
 		bEnabled = (pLogger->arChannel[index]&bit) != 0;
 	}

@@ -156,7 +156,7 @@ boolean_t CRtspClient::processEvent(CEvent* pEvent)
 				m_sessId = NO_SEQNUM;
 				if ( getFsmState() == RTSP_FSM_CONNECT )  {
 					if ( nresult == ESUCCESS ) {
-						log_debug(L_RTSP_FL, "[rtsp_cli] server %s connected\n",
+						log_trace(L_RTSP, "[rtsp_cli] server %s connected\n",
 								  (const char*)m_rtspServerAddr);
 						doOptions();
 					}
@@ -359,7 +359,7 @@ void CRtspClient::doOptions()
 
 	shell_assert(!m_rtspServerUrl.isEmpty());
 
-	log_debug(L_RTSP_FL, "[rtsp_cli] executing OPTIONS request\n");
+	log_trace(L_RTSP, "[rtsp_cli] executing OPTIONS request\n");
 
 	buildRequest("OPTIONS", pContainer, NULL);
 	setFsmState(RTSP_FSM_OPTIONS);
@@ -374,7 +374,7 @@ void CRtspClient::doDescribe()
 	dec_ptr<CHttpContainer>		pContainer = new CHttpContainer;
 	char 						strTemp[128];
 
-	log_debug(L_RTSP_FL, "[rtsp_cli] executing DESCRIBE request\n");
+	log_trace(L_RTSP, "[rtsp_cli] executing DESCRIBE request\n");
 
 	buildRequest("DESCRIBE", pContainer, NULL);
 	_tsnprintf(strTemp, sizeof(strTemp), "Accept: %s", SDP_HTTP_MEDIA_TYPE);
@@ -392,7 +392,7 @@ void CRtspClient::doPlayback()
 	dec_ptr<CHttpContainer>		pContainer = new CHttpContainer;
 	char	strBuf[256];
 
-	log_debug(L_RTSP_FL, "[rtsp_cli] executing PLAY request\n");
+	log_trace(L_RTSP, "[rtsp_cli] executing PLAY request\n");
 
 	buildRequest("PLAY", pContainer, NULL);
 
@@ -410,7 +410,7 @@ void CRtspClient::doPause()
 {
 	dec_ptr<CHttpContainer>		pContainer = new CHttpContainer;
 
-	log_debug(L_RTSP_FL, "[rtsp_cli] executing PAUSE request\n");
+	log_trace(L_RTSP, "[rtsp_cli] executing PAUSE request\n");
 
 	buildRequest("PAUSE", pContainer, NULL);
 	setFsmState(RTSP_FSM_PAUSING);
@@ -424,7 +424,7 @@ void CRtspClient::doTeardown()
 {
 	dec_ptr<CHttpContainer>		pContainer = new CHttpContainer;
 
-	log_debug(L_RTSP_FL, "[rtsp_cli] executing TEARDOWN request\n");
+	log_trace(L_RTSP, "[rtsp_cli] executing TEARDOWN request\n");
 
 	buildRequest("TEARDOWN", pContainer, NULL);
 	setFsmState(RTSP_FSM_TEARDOWN);
@@ -436,7 +436,7 @@ void CRtspClient::doTeardown()
  */
 void CRtspClient::doDisconnect()
 {
-	log_debug(L_RTSP_FL, "[rtsp_cli] RTSP disconnect\n");
+	log_trace(L_RTSP, "[rtsp_cli] RTSP disconnect\n");
 
 	m_netClient.disconnect();
 	stopIdleTimer();
@@ -479,7 +479,7 @@ void CRtspClient::onIdleTimer(void* p)
 		if ( !m_rtspSession.isEmpty() ) {
 			dec_ptr<CHttpContainer>		pContainer = new CHttpContainer;
 
-			log_debug(L_RTSP_FL, "[rtsp_cli] running IDLE timer\n");
+			log_trace(L_RTSP, "[rtsp_cli] running IDLE timer\n");
 
 			buildRequest((m_rtspOptions&RTSP_OPTION_GET_PARAMETER) != 0 ?
 						 "GET_PARAMETER" : "OPTIONS", pContainer, NULL);
@@ -530,11 +530,11 @@ result_t CRtspClient::processOptions(CHttpContainer* pContainer)
 		return EINVAL;
 	}
 
-	if ( logger_is_enabled(LT_DEBUG|L_RTSP_FL) )  {
+	if ( logger_is_enabled(LT_TRACE|L_RTSP) )  {
 		CString		strHead;
 
 		pContainer->getHeader(strHead);
-		log_debug(L_RTSP_FL, "[rtsp_cli] request OPTIONS successful, response:\n%s", strHead.cs());
+		log_trace(L_RTSP, "[rtsp_cli] request OPTIONS successful, response:\n%s", strHead.cs());
 	}
 
 	if ( pContainer->getHeader(strHeader, RTSP_SERVER_HEADER) )  {
@@ -565,7 +565,7 @@ result_t CRtspClient::processOptions(CHttpContainer* pContainer)
 	}
 
 	if ( (m_rtspOptions&RTSP_REQUIRED_OPTIONS) == RTSP_REQUIRED_OPTIONS ) {
-		log_debug(L_RTSP_FL, "[rtsp_cli] RTSP server supported options %Xh\n", m_rtspOptions);
+		log_trace(L_RTSP, "[rtsp_cli] RTSP server supported options %Xh\n", m_rtspOptions);
 		doDescribe();
 		nresult = ESUCCESS;
 	}
@@ -618,7 +618,7 @@ result_t CRtspClient::processDescribe(CHttpContainer* pContainer)
 		return EINVAL;
 	}
 
-	log_debug(L_RTSP_FL, "[rtsp_cli] request DESCRIBE successful, content:\n%s", pBody);
+	log_trace(L_RTSP, "[rtsp_cli] request DESCRIBE successful, content:\n%s", pBody);
 
 	m_sdp.clear();
 	nresult = m_sdp.load(pBody);
@@ -678,7 +678,7 @@ result_t CRtspClient::processSetup(CHttpContainer* pContainer)
 
 	pContainer->getHeader(strHead);
 
-	log_debug(L_RTSP_FL, "[rtsp_cli] request SETUP successful, response:\n%s", strHead.cs());
+	log_trace(L_RTSP, "[rtsp_cli] request SETUP successful, response:\n%s", strHead.cs());
 
 	/*
 	 * Parse Session/Timeout header
@@ -687,7 +687,7 @@ result_t CRtspClient::processSetup(CHttpContainer* pContainer)
 		parseSession(strHead, strSession, timeout);
 		if ( !strSession.isEmpty() )  {
 			m_rtspSession = strSession;
-			log_debug(L_RTSP_FL, "[rtsp_cli] RTSP session: '%s'\n", m_rtspSession.cs());
+			log_trace(L_RTSP, "[rtsp_cli] RTSP session: '%s'\n", m_rtspSession.cs());
 		}
 		if ( timeout > 0 )  {
 			m_rtspTimeout = timeout;
@@ -700,7 +700,7 @@ result_t CRtspClient::processSetup(CHttpContainer* pContainer)
 		return EINVAL;
 	}
 
-	log_debug(L_RTSP_FL, "[rtsp_cli] RTSP timeout: %d secs\n", m_rtspTimeout);
+	log_trace(L_RTSP, "[rtsp_cli] RTSP timeout: %d secs\n", m_rtspTimeout);
 
 	/*
 	 * Parse and check server selected transport parameters:
@@ -742,11 +742,11 @@ result_t CRtspClient::processPlay(CHttpContainer* pContainer)
 		return EINVAL;
 	}
 
-	if ( logger_is_enabled(LT_DEBUG|L_RTSP_FL) )  {
+	if ( logger_is_enabled(LT_TRACE|L_RTSP) )  {
 		CString		strHead;
 
 		pContainer->getHeader(strHead);
-		log_debug(L_RTSP_FL, "[rtsp_cli] request PLAY successful, response:\n%s", strHead.cs());
+		log_trace(L_RTSP, "[rtsp_cli] request PLAY successful, response:\n%s", strHead.cs());
 	}
 
 	setFsmState(RTSP_FSM_PLAYBACK);
@@ -774,7 +774,7 @@ result_t CRtspClient::processPause(CHttpContainer* pContainer)
 		return EINVAL;
 	}
 
-	log_debug(L_RTSP_FL, "[rtsp_cli] request PAUSE successful\n");
+	log_trace(L_RTSP, "[rtsp_cli] request PAUSE successful\n");
 
 	setFsmState(RTSP_FSM_CONFIGURED);
 	m_pParent->onRtspPause(this, ESUCCESS);
@@ -797,7 +797,7 @@ result_t CRtspClient::processTeardown(CHttpContainer* pContainer)
 	/* Check response code */
 	strResponse = pContainer->getStart();
 	if ( strResponse == RTSP_SUCCESS_RESPONSE ) {
-		log_debug(L_RTSP_FL, "[rtsp_cli] request TEARDOWN successful, response\n%s\n",
+		log_trace(L_RTSP, "[rtsp_cli] request TEARDOWN successful, response\n%s\n",
 				  strResponse.cs());
 	}
 	else {
@@ -838,7 +838,7 @@ void CRtspClient::connect(const CNetAddr& rtspServerAddr, const char* strServerU
 	m_rtspServerAddr = rtspServerAddr;
 	m_rtspServerUrl = strServerUrl;
 
-	log_debug(L_RTSP_FL, "[rtsp_cli] connecting to %s\n", (const char*)m_rtspServerAddr);
+	log_trace(L_RTSP, "[rtsp_cli] connecting to %s\n", (const char*)m_rtspServerAddr);
 
 	if ( !m_rtspServerAddr.isValid() )  {
 		log_error(L_RTSP, "[rtsp_cli] invalid RTSP address\n");
@@ -880,7 +880,7 @@ void CRtspClient::configure(CRtspChannel* pChannel)
 		return;
 	}
 
-	log_debug(L_RTSP_FL, "[rtsp_cli] executing SETUP request\n");
+	log_trace(L_RTSP, "[rtsp_cli] executing SETUP request\n");
 
 	buildRequest("SETUP", pContainer, pChannel);
 	pChannel->getSetupRequest(strTemp, sizeof(strTemp), &m_sdp);

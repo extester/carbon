@@ -190,10 +190,10 @@ void CMultiCamApp::initLogger()
 {
 	CApplication::initLogger();
 
-	logger_disable(LT_DEBUG|L_RTSP_FL);
-	logger_disable(LT_DEBUG|L_RTCP_FL);
-	//logger_disable(LT_DEBUG|L_NET_MEDIA_FL);
-	//logger_disable(LT_DEBUG|L_RTP_VIDEO_H264_FL);
+	//logger_disable(LT_TRACE|L_RTSP);
+	//logger_disable(LT_TRACE|L_RTCP);
+	//logger_disable(LT_TRACE|L_NET_MEDIA);
+	//logger_disable(LT_TRACE|L_RTP_VIDEO_H264);
 }
 
 /*

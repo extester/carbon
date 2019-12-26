@@ -139,7 +139,7 @@ result_t CMultiIo::multiIo(multi_io_t* arMio, int count, hr_time_t hrTimeout)
 		nr = pMio->socket.connect(pMio->netAddr);
 		switch( nr )  {
 			case EINPROGRESS:			/* Connecting */
-				log_debug(L_NET_FL, "[mio(%i)] %s: connecting to %s in progress...\n",
+				log_trace(L_NET, "[mio(%i)] %s: connecting to %s in progress...\n",
 							i, m_strTitle, (const char*)pMio->netAddr);
 				pMio->stage = CMultiIo::stageConnect;
 				nPending++;
@@ -148,7 +148,7 @@ result_t CMultiIo::multiIo(multi_io_t* arMio, int count, hr_time_t hrTimeout)
 				break;
 
 			case ESUCCESS:				/* Connected */
-				log_debug(L_NET_FL, "[mio(%i)] %s: connected to %s\n",
+				log_trace(L_NET, "[mio(%i)] %s: connected to %s\n",
 							i, m_strTitle, (const char*)pMio->netAddr);
 				if ( pMio->options&CMultiIo::mioSend )  {
 					log_debug(L_MIO, "[mio(%i)] %s: start sending to %s\n",
@@ -159,7 +159,7 @@ result_t CMultiIo::multiIo(multi_io_t* arMio, int count, hr_time_t hrTimeout)
 					pPoll->events = POLLOUT;
 				} else
 				if ( pMio->options&CMultiIo::mioReceive )  {
-					log_debug(L_NET_FL, "[mio(%i)] %s: start receiving to %s\n",
+					log_trace(L_NET, "[mio(%i)] %s: start receiving to %s\n",
 								i, m_strTitle, (const char*)pMio->netAddr);
 					pMio->stage = CMultiIo::stageReceive;
 					nPending++;
@@ -174,7 +174,7 @@ result_t CMultiIo::multiIo(multi_io_t* arMio, int count, hr_time_t hrTimeout)
 
 			case EINTR:
 			case ECANCELED:
-				log_debug(L_NET_FL, "[mio] mio[%i] connecting to %s canceled, result: %d\n",
+				log_trace(L_NET, "[mio] mio[%i] connecting to %s canceled, result: %d\n",
 							i, (const char*)pMio->netAddr, nr);
 				nresult = ECANCELED;
 				break;
@@ -237,7 +237,7 @@ result_t CMultiIo::multiIo(multi_io_t* arMio, int count, hr_time_t hrTimeout)
 							/*
 							 * Sending
 							 */
-							log_debug(L_NET_FL, "[mio(%d)] %s: sending to %s...\n",
+							log_trace(L_NET, "[mio(%d)] %s: sending to %s...\n",
 											i, m_strTitle, (const char*)pMio->netAddr);
 							nr = doSend(pMio);
 							if ( nr == ESUCCESS )  {
@@ -252,7 +252,7 @@ result_t CMultiIo::multiIo(multi_io_t* arMio, int count, hr_time_t hrTimeout)
 								}
 							} else
 							if ( nr == EAGAIN )  {
-								log_debug(L_NET_FL, "[mio(%d)] %s: sending to %s AGAIN...\n",
+								log_trace(L_NET, "[mio(%d)] %s: sending to %s AGAIN...\n",
 											i, m_strTitle, (const char*)pMio->netAddr);
 								pMio->stage = CMultiIo::stageSend;
 								pPoll->events = POLLOUT;
@@ -271,7 +271,7 @@ result_t CMultiIo::multiIo(multi_io_t* arMio, int count, hr_time_t hrTimeout)
 							/*
 							 * Receiving
 							 */
-							log_debug(L_NET_FL, "[mio(%d)] %s: start receiving...\n", i, m_strTitle);
+							log_trace(L_NET, "[mio(%d)] %s: start receiving...\n", i, m_strTitle);
 							pMio->stage = CMultiIo::stageReceive;
 							pPoll->events = POLLIN|POLLPRI;
 						} else {
@@ -339,7 +339,7 @@ result_t CMultiIo::multiIo(multi_io_t* arMio, int count, hr_time_t hrTimeout)
 						/*
 						 * Receiving
 						 */
-						log_debug(L_NET_FL, "[mio(%d)] %s: receiving from %s...\n",
+						log_trace(L_NET, "[mio(%d)] %s: receiving from %s...\n",
 										i, m_strTitle, (const char*)pMio->netAddr);
 						nr = doReceive(pMio);
 						if ( nr == ESUCCESS )  {

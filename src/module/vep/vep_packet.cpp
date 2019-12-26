@@ -122,10 +122,10 @@ result_t CVepPacket::expandBuffer(size_t nSize)
 	}
 
 	if ( isInline() )  {
-		log_debug(L_NET_FL, "[vep_pack] alloc: inline buf => ool buf %d bytes\n", size);
+		log_trace(L_NET, "[vep_pack] alloc: inline buf => ool buf %d bytes\n", size);
 	}
 	else {
-		log_debug(L_NET_FL, "[vep_packet] realloc: %d => %d bytes\n", m_nSize, size);
+		log_trace(L_NET, "[vep_packet] realloc: %d => %d bytes\n", m_nSize, size);
 	}
 
 	pBuf = (uint8_t*)memRealloc(isInline() ? NULL : m_pPack, size);

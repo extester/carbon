@@ -2,7 +2,7 @@
  *  Shell library
  *  Logger
  *
- *  Copyright (c) 2013-2015 Softland. All rights reserved.
+ *  Copyright (c) 2013-2019 Softland. All rights reserved.
  *  Licensed under the Apache License, Version 2.0
  */
 /*
@@ -23,6 +23,8 @@
  *  Revision 2.0, 25.08.2015 13:10:41
  *  	Separate appenders to the modules.
  *
+ *  Revision 2.1, 25.12.2019 19:17:47
+ *  	Added LT_TRACE log type support.
  */
 
 #ifndef __SHELL_LOGGER_BASE_H_INCLUDED__
@@ -129,8 +131,9 @@ typedef struct logger_type
 #define I_ERROR				1			/* Error 'ERR' */
 #define I_WARNING			2			/* Warning 'WRN' */
 #define I_INFO				3			/* Information 'INF' */
+#define I_TRACE				4			/* Tracing 'TRC' */
 
-#define LOGGER_TYPES		4
+#define LOGGER_TYPES		5
 
 class CLogger
 {

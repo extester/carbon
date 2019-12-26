@@ -172,7 +172,7 @@ result_t CModemSim900r::initModem(int nBaudRate, hr_time_t hrTimeout)
 	size_t			size;
 	result_t		nresult = ETIMEDOUT, nr;
 
-	log_debug(L_MODEM_FL, "[modem(%s)] hw modem initialising...\n", getName());
+	log_trace(L_MODEM, "[modem(%s)] hw modem initialising...\n", getName());
 	
 	resetState();
 
@@ -195,7 +195,7 @@ result_t CModemSim900r::initModem(int nBaudRate, hr_time_t hrTimeout)
 					nr = exec0(buffer, buffer, sizeof(buffer), HR_2SEC, HR_2SEC);
 					if ( nr == ESUCCESS )  {
 						if ( _tstrcmp(buffer, "\r\nOK\r\n") == 0 )  {
-							log_debug(L_MODEM_FL, "[modem(%s)] autobauding completed\n", getName());
+							log_trace(L_MODEM, "[modem(%s)] autobauding completed\n", getName());
 							bAutobaud = TRUE;
 							nresult = ESUCCESS;	/* !!! */
 						}
@@ -216,7 +216,7 @@ result_t CModemSim900r::initModem(int nBaudRate, hr_time_t hrTimeout)
 			/*
 			 * Interrupted by user
 			 */
-			log_debug(L_MODEM_FL, "[modem(%s)] initialisation sequency interrupted\n", getName());
+			log_trace(L_MODEM, "[modem(%s)] initialisation sequency interrupted\n", getName());
 			nresult = nr;
 			break;
 		}
@@ -246,7 +246,7 @@ result_t CModemSim900r::initModem(int nBaudRate, hr_time_t hrTimeout)
 	}
 
 	if ( nresult == ESUCCESS ) {
-		log_debug(L_MODEM_FL, "[modem(%s)] hw init success, sim card is %s\n",
+		log_trace(L_MODEM, "[modem(%s)] hw init success, sim card is %s\n",
 				  	getName(), m_nCardState == CARD_STATE_PRESENT ? "inserted" : "not inserted");
 	}
 	else {
@@ -518,7 +518,7 @@ result_t CModemSim900r::send(const void* pBuffer, size_t* pSize, hr_time_t hrTim
 				doUnsolicited(strTmpBuffer, sizeEcho);
 			}
 			else {
-				log_debug(L_MODEM_FL, "[modem(%s)] failed to receive command ECHO, result: %d\n",
+				log_trace(L_MODEM, "[modem(%s)] failed to receive command ECHO, result: %d\n",
 						  				getName(), nresult);
 			}
 		}
@@ -791,7 +791,7 @@ result_t CModemSim900r::waitNetworkRegister(hr_time_t hrTimeout, boolean_t* pbRo
 	int 		iter = 0;
 	hr_time_t	hrNow = hr_time_now();
 
-	log_debug(L_MODEM_FL, "[modem(%s)] network registration...\n", getName());
+	log_trace(L_MODEM, "[modem(%s)] network registration...\n", getName());
 
 	while ( hr_timeout(hrNow, hrTimeout) > HR_0 )  {
 		nr = execCmd1("AT+CREG?", buffer, sizeof(buffer), HR_2SEC, HR_2SEC);
@@ -812,19 +812,19 @@ result_t CModemSim900r::waitNetworkRegister(hr_time_t hrTimeout, boolean_t* pbRo
 						break;
 					
 					case 1:		/* Registered */
-						log_debug(L_MODEM_FL, "[modem(%s)] network registered\n", getName());
+						log_trace(L_MODEM, "[modem(%s)] network registered\n", getName());
 						nresult = ESUCCESS;
 						if ( pbRoaming ) *pbRoaming = FALSE;
 						break;
 					
 					case 5:		/* Registered, roaming */
-						log_debug(L_MODEM_FL, "[modem(%s)] network registered (roaming)\n", getName());
+						log_trace(L_MODEM, "[modem(%s)] network registered (roaming)\n", getName());
 						nresult = ESUCCESS;
 						if ( pbRoaming ) *pbRoaming = TRUE;
 						break;
 					
 					case 3:		/* Denied */
-						log_debug(L_MODEM_FL, "[modem(%s)] network registration DENIED\n", getName());
+						log_trace(L_MODEM, "[modem(%s)] network registration DENIED\n", getName());
 						nresult = EACCES;
 						break;
 				}
@@ -843,7 +843,7 @@ result_t CModemSim900r::waitNetworkRegister(hr_time_t hrTimeout, boolean_t* pbRo
 		}
 
 		if ( hr_sleep(hrInterval) == EINTR )  {
-			log_debug(L_MODEM_FL, "[modem(%s)] network registration has been interrupted\n",
+			log_trace(L_MODEM, "[modem(%s)] network registration has been interrupted\n",
 					  	getName());
 			nresult = EINTR;
 			break;
@@ -869,7 +869,7 @@ result_t CModemSim900r::readType(char* strType, size_t nLength)
 	nresult = execCmd1("AT+CGMM", strTmp, sizeof(strTmp), HR_2SEC, HR_2SEC);
 	if ( nresult == ESUCCESS ) {
 		copyString(strType, strTmp, nLength);
-		log_debug(L_MODEM_FL, "[modem(%s)] got modem type: '%s'\n", getName(), strTmp);
+		log_trace(L_MODEM, "[modem(%s)] got modem type: '%s'\n", getName(), strTmp);
 	}
 
 	return nresult;
@@ -898,7 +898,7 @@ result_t CModemSim900r::readRevision(char* strRevision, size_t nLength)
 			copyString(strRevision, strTmp, nLength);
 		}
 
-		log_debug(L_MODEM_FL, "[modem(%s)] got modem firmware revision: '%s'\n",
+		log_trace(L_MODEM, "[modem(%s)] got modem firmware revision: '%s'\n",
 				  getName(), strRevision);
 	}
 
@@ -921,7 +921,7 @@ result_t CModemSim900r::readImei(char* strImei, size_t nLength)
 	nresult = execCmd1("AT+GSN", strTmp, sizeof(strTmp), HR_2SEC, HR_2SEC);
 	if ( nresult == ESUCCESS ) {
 		copyString(strImei, strTmp, nLength);
-		log_debug(L_MODEM_FL, "[modem(%s)] got imei: '%s'\n", getName(), strTmp);
+		log_trace(L_MODEM, "[modem(%s)] got imei: '%s'\n", getName(), strTmp);
 	}
 
 	return nresult;
@@ -961,7 +961,7 @@ result_t CModemSim900r::readOperator(char* strOper, size_t nLength)
 					}
 
 					nresult = ESUCCESS;
-					log_debug(L_MODEM_FL, "[modem(%s)] got operator: '%s'\n", getName(), strOper);
+					log_trace(L_MODEM, "[modem(%s)] got operator: '%s'\n", getName(), strOper);
 				}
 			}
 		}
@@ -999,10 +999,10 @@ result_t CModemSim900r::readSimId(char* strSimId, size_t nLength)
 			copyString(strSimId, strTmp, nLength);
 		}
 
-		log_debug(L_MODEM_FL, "[modem(%s)] got sim id: '%s'\n", getName(), strSimId);
+		log_trace(L_MODEM, "[modem(%s)] got sim id: '%s'\n", getName(), strSimId);
 	}
 	else {
-		log_debug(L_MODEM_FL, "[modem(%s)] obtaining sim id failed, result: %d\n",
+		log_trace(L_MODEM, "[modem(%s)] obtaining sim id failed, result: %d\n",
 				  getName(), nresult);
 	}
 

@@ -262,7 +262,7 @@ result_t CSocketAsync::open(const CNetAddr& bindAddr, socket_type_t sockType)
 	if ( bindAddr != NETADDR_NULL )  {
 		struct sockaddr_in  sockaddr_tmp;
 
-		log_debug(L_SOCKET_FL, "[socket] binding socket to %s\n", bindAddr.cs());
+		log_trace(L_SOCKET, "[socket] binding socket to %s\n", bindAddr.cs());
 
 		_tbzero_object(sockaddr_tmp);
 		sockaddr_tmp.sin_family = AF_INET;
@@ -400,7 +400,7 @@ result_t CSocketAsync::connect(const CNetAddr& dstAddr, const CNetAddr& bindAddr
 
     if ( errno != EINPROGRESS )  {
         nresult = errno;
-    	log_debug(L_SOCKET_FL, "[socket] failed to connect to %s, result: %d\n",
+    	log_trace(L_SOCKET, "[socket] failed to connect to %s, result: %d\n",
 							dstAddr.cs(), nresult);
         close();
         return nresult;
@@ -449,7 +449,7 @@ result_t CSocketAsync::connect(const char* strDstSocket, const char* strBindSock
 
 	nresult = errno;
 	if ( nresult != EINPROGRESS )  {
-		log_debug(L_SOCKET_FL, "[socket] failed to connect to %s, result: %d\n",
+		log_trace(L_SOCKET, "[socket] failed to connect to %s, result: %d\n",
 				  strDstSocket, nresult);
 		close();
 	}
@@ -616,7 +616,7 @@ result_t CSocketAsync::receive(void* pBuffer, size_t* pSize, CNetAddr* pSrcAddr)
 
 		if ( len == 0 )  {
 			/* Server closes the socket */
-			log_debug(L_SOCKET_FL, "[socket] connection closed by peer\n");
+			log_trace(L_SOCKET, "[socket] connection closed by peer\n");
 			nresult = ECONNRESET;
 			break;
 		}
@@ -675,7 +675,7 @@ result_t CSocketAsync::receiveLine(void* pBuffer, size_t nPreSize, size_t* pSize
 	length = 0;
 	nresult = ESUCCESS;
 
-	log_debug(L_SOCKET_FL, "[socket] receiving, presize %d, size %d\n", nPreSize, *pSize);
+	log_trace(L_SOCKET, "[socket] receiving, presize %d, size %d\n", nPreSize, *pSize);
 
 	while( length < size )  {
 		len = ::recv(m_hSocket, p+length, 1, MSG_NOSIGNAL);
@@ -691,7 +691,7 @@ result_t CSocketAsync::receiveLine(void* pBuffer, size_t nPreSize, size_t* pSize
 
 		if ( len == 0 )  {
 			/* Server closes the socket */
-			log_debug(L_SOCKET_FL, "[socket] connection closed by peer\n");
+			log_trace(L_SOCKET, "[socket] connection closed by peer\n");
 			nresult = ECONNRESET;
 			break;
 		}
@@ -702,7 +702,7 @@ result_t CSocketAsync::receiveLine(void* pBuffer, size_t nPreSize, size_t* pSize
 		if ( (length+nPreSize) >= lenEol )  {
 			/* Check for eol */
 			if ( _tmemcmp((char*)pBuffer+nPreSize+length-lenEol, strEol, lenEol) == 0 )  {
-				log_debug(L_SOCKET_FL, "[socket] detected EOL\n");
+				log_trace(L_SOCKET, "[socket] detected EOL\n");
 				break;	/* Done */
 			}
 		}
@@ -875,7 +875,7 @@ result_t CSocket::connect(const CNetAddr& dstAddr, hr_time_t hrTimeout,
 				nresult = checkREvents(revents);
 				nresult = nresult == ECONNRESET ? ECONNREFUSED : nresult;
 				if ( nresult != ESUCCESS )  {
-					log_debug(L_SOCKET_FL, "[socket] failed to connect, revents 0x%x, result: %d\n",
+					log_trace(L_SOCKET, "[socket] failed to connect, revents 0x%x, result: %d\n",
 											revents, nresult);
 					close();
 				}
@@ -917,7 +917,7 @@ result_t CSocket::connect(const char* strDstSocket, hr_time_t hrTimeout,
 				nresult = checkREvents(revents);
 				nresult = nresult == ECONNRESET ? ECONNREFUSED : nresult;
 				if ( nresult != ESUCCESS )  {
-					log_debug(L_SOCKET_FL, "[socket] failed to connect, revents 0x%x, result: %d\n",
+					log_trace(L_SOCKET, "[socket] failed to connect, revents 0x%x, result: %d\n",
 							  revents, nresult);
 					close();
 				}

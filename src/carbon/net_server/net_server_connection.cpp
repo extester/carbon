@@ -72,7 +72,7 @@ void CNetServerConnection::doSend(CNetContainer* pContainer, seqnum_t nSessId)
     result_t    nresult;
 
     if ( m_pSocket->isOpen() )  {
-		log_debug(L_NETSERV_FL, "[netserv_con(%d)] sending a container\n", nSessId);
+		log_trace(L_NETSERV, "[netserv_con(%d)] sending a container\n", nSessId);
 
         nresult = pContainer->send(*m_pSocket, m_pParent->getSendTimeout());
 
@@ -86,7 +86,7 @@ void CNetServerConnection::doSend(CNetContainer* pContainer, seqnum_t nSessId)
 					log_debug(L_NETCONN_IO, "[netserv_con] <<< Sent container: %s\n", strTmp);
 				}
 				else {
-					log_debug(L_NETSERV_FL, "[netserv_con(%d)] container sent\n", nSessId);
+					log_trace(L_NETSERV, "[netserv_con(%d)] container sent\n", nSessId);
 				}
 				m_pParent->statSend();
 			}
@@ -142,7 +142,7 @@ result_t CNetServerConnection::doRecv(hr_time_t htTimeout)
 	}
 
     if ( m_pSocket->isOpen() )  {
-		log_debug(L_NETSERV_FL, "[netserv_con] receiving a container\n");
+		log_trace(L_NETSERV, "[netserv_con] receiving a container\n");
         nresult = pContainer->receive(*m_pSocket, htTimeout);
 
 		if ( nresult == ESUCCESS || nresult == ETIMEDOUT || nresult == ECANCELED )  {
@@ -157,7 +157,7 @@ result_t CNetServerConnection::doRecv(hr_time_t htTimeout)
 				log_debug(L_NETCONN_IO, "[netserv_con] >>> Recv container: %s\n", strTmp);
 			}
 			else {
-				log_debug(L_NETSERV_FL, "[netserv_con] received a container\n");
+				log_trace(L_NETSERV, "[netserv_con] received a container\n");
 			}
 
 			notifyRecv(pContainer);
@@ -165,9 +165,13 @@ result_t CNetServerConnection::doRecv(hr_time_t htTimeout)
         }
         else {
             if ( nresult != ETIMEDOUT && nresult != ECANCELED )  {
-				int 	logLevel = IS_NETWORK_CONNECTION_CLOSED(nresult) ?
-								  	L_NETSERV_FL : L_NETSERV;
-                log_debug(logLevel, "[netserv_con] receive packet failed, error %d\n", nresult);
+				if ( IS_NETWORK_CONNECTION_CLOSED(nresult) )  {
+					log_trace(L_NETSERV, "[netserv_con] receive packet failed, error %d\n", nresult);
+				}
+				else {
+					log_debug(L_NETSERV, "[netserv_con] receive packet failed, error %d\n", nresult);
+				}
+
 				m_pParent->statFail();
             }
 
@@ -193,7 +197,7 @@ void CNetServerConnection::notifyClosed()
 	if ( !m_bFailSent ) {
 		CEvent*		pEvent;
 
-		log_debug(L_NETSERV_FL, "[netserv_con] connection closed, sending a notification\n");
+		log_trace(L_NETSERV, "[netserv_con] connection closed, sending a notification\n");
 
 		pEvent = new CEvent(EV_NET_SERVER_DISCONNECTED, m_pParent->getReceiver(),
 							(PPARAM)getHandle(), (NPARAM)0, "net_serv_closed_connection");

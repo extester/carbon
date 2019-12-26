@@ -236,7 +236,7 @@ result_t CShellExecuteServer::run()
 
 	nresult = prepareSocket();
 	if ( nresult == ESUCCESS )  {
-		log_debug(L_SHELL_EXECUTE_FL, "[shell_execute] listening on %s...\n", m_strSocket.cs());
+		log_trace(L_SHELL_EXECUTE, "[shell_execute] listening on %s...\n", m_strSocket.cs());
 		nresult = CTcpServer::run();
 	}
 
@@ -267,7 +267,7 @@ result_t CShellExecuteServer::executeEvent(CRemoteEvent* pEvent)
 	int 			retVal = 250;
 	result_t		nresult, nrChild = ENOENT;
 
-	log_debug(L_SHELL_EXECUTE_FL, "[shell_execute] received a request from %s\n",
+	log_trace(L_SHELL_EXECUTE, "[shell_execute] received a request from %s\n",
 			  pEvent->getReplyRid().cs());
 
 	pData = pEvent->getData();
@@ -326,7 +326,7 @@ boolean_t CShellExecuteServer::executeCmd(const char* strCmd, result_t* pnresult
 	/* New child process */
 	*pnresult = doExecute(strCmd, pRetVal, pstrOutBuffer);
 
-	log_debug(L_SHELL_EXECUTE_FL, "[shell_execute] execute result %d, retCode %d, outbuf size %d bytes\n",
+	log_trace(L_SHELL_EXECUTE, "[shell_execute] execute result %d, retCode %d, outbuf size %d bytes\n",
 			  	*pnresult, *pRetVal, *pstrOutBuffer ? _tstrlen(*pstrOutBuffer) : 0);
 	stop();
 	return TRUE;
@@ -397,7 +397,7 @@ result_t CShellExecuteServer::doExecute(const char* strCmd, int* pRetVal,
 		_tbzero_object(info);
 		retVal = waitid(P_PID, pid, &info,  WEXITED|WNOHANG|WNOWAIT);
 		if ( retVal == 0 && info.si_pid == pid )  {
-			log_debug(L_SHELL_EXECUTE_FL, "[shell_execute] client exitted\n");
+			log_trace(L_SHELL_EXECUTE, "[shell_execute] client exitted\n");
 			break;
 		}
 	}
@@ -472,9 +472,10 @@ int main(int argc, char* argv[])
 	logger_set_format(LT_DEBUG, "%T [%l] %P(%N): (%p) %s");
 	logger_set_format(LT_ERROR, "%T [%l] %P(%N): (%p) %s");
 	logger_set_format(LT_INFO, "%T [%l] %P(%N): (%p) %s");
+	logger_set_format(LT_TRACE, "%T [%l] %P(%N): (%p) %s");
 
 	//logger_disable(LT_DEBUG|L_SHELL_EXECUTE);
-	logger_disable(LT_ALL|L_SHELL_EXECUTE_FL);
+	logger_disable(LT_TRACE|L_SHELL_EXECUTE);
 
 	signal(SIGINT, signalHandler);
 	signal(SIGTERM, signalHandler);
@@ -483,9 +484,9 @@ int main(int argc, char* argv[])
 
 	g_pShellExecuteServer = new CShellExecuteServer;
 
-	log_info(L_SHELL_EXECUTE_FL, "[shell_execute] starting server instance\n");
+	log_trace(L_SHELL_EXECUTE, "[shell_execute] starting server instance\n");
 	nresult = g_pShellExecuteServer->run();
-	log_info(L_SHELL_EXECUTE_FL, "[shell_execute] stopping server instance\n");
+	log_trace(L_SHELL_EXECUTE, "[shell_execute] stopping server instance\n");
 
 	SAFE_DELETE(g_pShellExecuteServer);
 

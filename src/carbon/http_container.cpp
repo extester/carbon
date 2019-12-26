@@ -460,7 +460,7 @@ result_t CHttpContainer::receive(CSocket& socket, hr_time_t hrTimeout, CNetAddr*
 				nresult = socket.receiveLine(strBuf, &length, HTTP_EOL,
 										hr_timeout(hrNow, hrTimeout));
 				if ( nresult == ESUCCESS )  {
-					log_debug(L_HTTP_CONT_FL, "[http_cont] http code: '%s'", strBuf);
+					log_trace(L_HTTP_CONT, "[http_cont] http code: '%s'", strBuf);
 
 					m_strStart = strBuf;
 					m_strStart.rtrim(HTTP_EOL);
@@ -480,7 +480,7 @@ result_t CHttpContainer::receive(CSocket& socket, hr_time_t hrTimeout, CNetAddr*
 				nresult = socket.receiveLine(strBuf, &length, HTTP_EOL,
 											 hr_timeout(hrNow, hrTimeout));
 				if ( nresult == ESUCCESS )  {
-					log_debug(L_HTTP_CONT_FL, "[http_cont] http header: '%s'", strBuf);
+					log_trace(L_HTTP_CONT, "[http_cont] http header: '%s'", strBuf);
 
 					if ( _tstrcmp(strBuf, HTTP_EOL) == 0 )  {
 						/*
@@ -545,7 +545,7 @@ result_t CHttpContainer::receive(CSocket& socket, hr_time_t hrTimeout, CNetAddr*
 	}
 
 	if ( nresult == ESUCCESS )  {
-		log_debug(L_HTTP_CONT_FL, "[http_cont] http body length: %d bytes\n", m_nCurSize);
+		log_trace(L_HTTP_CONT, "[http_cont] http body length: %d bytes\n", m_nCurSize);
 	}
 
 	return nresult;

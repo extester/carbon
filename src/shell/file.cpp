@@ -358,7 +358,7 @@ result_t CFileAsync::read(void* pBuffer, size_t* pSize)
 
 		if ( len == 0 )  {
 			/* End of file */
-			log_debug(L_FILE_FL, "[file] file %s, end of file reached\n", m_strFile);
+			log_trace(L_FILE, "[file] file %s, end of file reached\n", m_strFile);
 			nresult = ENODATA;
 			break;
 		}
@@ -425,7 +425,7 @@ result_t CFileAsync::readLine(void* pBuffer, size_t nPreSize, size_t* pSize, con
 
 		if ( len == 0 )  {
 			/* Eof detected */
-			log_debug(L_FILE_FL, "[file] file %s, end of file reached\n", m_strFile);
+			log_trace(L_FILE, "[file] file %s, end of file reached\n", m_strFile);
 			nresult = length > 0 ? ESUCCESS : ENODATA;
 			break;
 		}
@@ -1155,7 +1155,7 @@ result_t CFile::copyFile(const char* strDestination, const char* strSource)
 
 	nresult = src.open(strSource, CFile::fileRead);
 	if ( nresult != ESUCCESS )  {
-		log_debug(L_FILE_FL, "[file] failed to open source file %s, result: %d\n",
+		log_trace(L_FILE, "[file] failed to open source file %s, result: %d\n",
 				  strSource, nresult);
 		return nresult;
 	}
@@ -1163,7 +1163,7 @@ result_t CFile::copyFile(const char* strDestination, const char* strSource)
 	nresult = src.getSize(&szFile);
 	if ( nresult != ESUCCESS )  {
 		src.close();
-		log_debug(L_FILE_FL, "[file] failed to get source file size, result: %d\n", nresult);
+		log_trace(L_FILE, "[file] failed to get source file size, result: %d\n", nresult);
 		return nresult;
 	}
 
@@ -1186,7 +1186,7 @@ result_t CFile::copyFile(const char* strDestination, const char* strSource)
 	if ( nresult != ESUCCESS )  {
 		src.close();
 		memFree(pBuffer);
-		log_debug(L_FILE_FL, "[file] failed to create destination file %s, result: %d\n",
+		log_trace(L_FILE, "[file] failed to create destination file %s, result: %d\n",
 				  strDestination, nresult);
 		return nresult;
 	}
@@ -1374,7 +1374,7 @@ result_t CFile::removeDir(const char* strPath, boolean_t bRemoveFull)
 		}
 		else {
 			nresult = errno;
-			log_debug(L_FILE_FL, "[file] can't open directory %s, result %d\n",
+			log_trace(L_FILE, "[file] can't open directory %s, result %d\n",
 					  strPath, nresult);
 		}
 	}
@@ -1385,7 +1385,7 @@ result_t CFile::removeDir(const char* strPath, boolean_t bRemoveFull)
 		retVal = ::rmdir(strPath);
 		if ( retVal < 0 )  {
 			nresult = errno;
-			log_debug(L_FILE_FL, "[file] can't remove directory %s, result %d\n",
+			log_trace(L_FILE, "[file] can't remove directory %s, result %d\n",
 					  	strPath, nresult);
 		}
 	}
@@ -1413,7 +1413,7 @@ result_t CFile::sizeFile(const char* strFilename, uint64_t* pSize)
 	}
 	else {
 		nresult = errno;
-		log_debug(L_FILE_FL, "[file] failed to get size, file %s, result: %d\n",
+		log_trace(L_FILE, "[file] failed to get size, file %s, result: %d\n",
 					  strFilename, nresult);
 	}
 

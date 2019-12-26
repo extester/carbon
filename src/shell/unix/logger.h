@@ -2,7 +2,7 @@
  *  Shell library
  *  Logger (UNIX)
  *
- *  Copyright (c) 2013-2015 Softland. All rights reserved.
+ *  Copyright (c) 2013-2019 Softland. All rights reserved.
  *  Licensed under the Apache License, Version 2.0
  */
 /*
@@ -16,6 +16,12 @@
  *
  *  Revision 1.2, 04.04.2015 21:35:49
  *  	Added L_ALWAYS_DISABLED log channel.
+ *
+ *  Revision 1.3, 25.12.2019 19:16:19
+ *  	Added LT_TRACE log type, log_trace(), log_trace2,
+ *  	log_trace_bin(), log_trace_bin2().
+ *  	Removed all L_*_FL log levels and changed to
+ *  	log_debug(L_*_FL, ..) => log_trace(L_*, ..)
  */
 
 #ifndef __SHELL_LOGGER_H_INCLUDED__
@@ -30,17 +36,18 @@
  * Output log types
  */
 
-#define LT_ALL					0x00000000	/* All types selected */
-#define LT_DEBUG 				0x01000000	/* 'DEBUG' log type */
-#define LT_ERROR				0x02000000	/* 'ERROR' log type */
-#define LT_WARNING				0x04000000	/* 'WARNING' log type */
-#define LT_INFO					0x08000000	/* 'INFO' log type */
+#define LT_ALL					0x00000000U		/* All types selected */
+#define LT_DEBUG 				0x01000000U		/* 'DEBUG' log type */
+#define LT_ERROR				0x02000000U		/* 'ERROR' log type */
+#define LT_WARNING				0x04000000U		/* 'WARNING' log type */
+#define LT_INFO					0x08000000U		/* 'INFO' log type */
+#define LT_TRACE				0x10000000U		/* 'TRACE' log type */
 
 /*
  * Maximum supported log channels, 10 bits => up to 1024
  */
-#define LOGGER_CHANNEL_BIT_MAX	10
-#define LOGGER_CHANNEL_MAX		(1<<LOGGER_CHANNEL_BIT_MAX)
+#define LOGGER_CHANNEL_BIT_MAX	10U
+#define LOGGER_CHANNEL_MAX		(1U<<LOGGER_CHANNEL_BIT_MAX)
 
 /*
  * Output log channels
@@ -48,27 +55,23 @@
  * 		Channels 0..255 are reserved for the system/library purpose
  */
 
-#define L_ALL					0			/* All channels selected */
-#define L_ALWAYS_ENABLED		1			/* Always enabled channel */
-#define L_ALWAYS_DISABLED		2			/* Always disabled channel */
-#define L_GEN					3			/* Default 'GENERIC' channel */
+#define L_ALL					0U			/* All channels selected */
+#define L_ALWAYS_ENABLED		1U			/* Always enabled channel */
+#define L_ALWAYS_DISABLED		2U			/* Always disabled channel */
+#define L_GEN					3U			/* Default 'GENERIC' channel */
 
-#define L_SHELL					32			/* First shell library available channel */
+#define L_SHELL					32U			/* First shell library available channel */
 
-#define L_GEN_FL				(L_SHELL+0)
-#define L_SOCKET				(L_SHELL+1)
-#define L_SOCKET_FL				(L_SHELL+2)
-#define L_FILE					(L_SHELL+3)
-#define L_FILE_FL				(L_SHELL+4)
-#define L_MIO					(L_SHELL+5)
-#define L_NET_FL				(L_SHELL+6)
-#define L_ICMP					(L_SHELL+7)
-#define L_ICMP_FL				(L_SHELL+8)
-#define L_EV_TRACE_TIMER		(L_SHELL+9)
-#define L_EV_TRACE_EVENT		(L_SHELL+10)
-#define L_BOOT					(L_SHELL+11)
-#define L_DB					(L_SHELL+12)
-#define L_DB_SQL_TRACE			(L_SHELL+13)
+#define L_SOCKET				(L_SHELL+0)
+#define L_FILE					(L_SHELL+1)
+#define L_MIO					(L_SHELL+2)
+#define L_NET					(L_SHELL+3)
+#define L_ICMP					(L_SHELL+4)
+#define L_EV_TRACE_TIMER		(L_SHELL+5)
+#define L_EV_TRACE_EVENT		(L_SHELL+6)
+#define L_BOOT					(L_SHELL+7)
+#define L_DB					(L_SHELL+8)
+#define L_DB_SQL_TRACE			(L_SHELL+9)
 
 #define L_SHELL_USER			(L_DB_SQL_TRACE+1)
 
@@ -86,10 +89,10 @@ typedef unsigned int*			appender_handle_t;
 /*
  * Log message
  *
- * log_info(), log_warning(), log_error(), log_debug()
+ * log_info(), log_warning(), log_error(), log_debug(), log_trace()
  * 		got a single log channel and write a log message
  *
- * log_info2(), log_warning2(), log_error2(), log_debug2()
+ * log_info2(), log_warning2(), log_error2(), log_debug2(), log_trace2()
  * 		got the two log channels and write a log message
  */
 #define log_info(__channel, __message, ...)	\
@@ -124,11 +127,19 @@ typedef unsigned int*			appender_handle_t;
 	logger_write(LT_DEBUG|(__channel)|((__channel2)<<LOGGER_CHANNEL_BIT_MAX), \
 				__FILE__, __LINE__, __FUNCTION__, 0, 0, __message, ##__VA_ARGS__)
 
+#define log_trace(__channel, __message, ...)	\
+	logger_write(LT_TRACE|(__channel), __FILE__, __LINE__, __FUNCTION__, \
+				0, 0, __message, ##__VA_ARGS__)
+
+#define log_trace2(__channel, __channel2, __message, ...)	\
+	logger_write(LT_TRACE|(__channel)|((__channel2)<<LOGGER_CHANNEL_BIT_MAX), \
+				__FILE__, __LINE__, __FUNCTION__, 0, 0, __message, ##__VA_ARGS__)
+
 /*
  * Log message and hex dump:
  * 		<message><dump>
  *
- * log_debug_bin(), log_debug_bin2()
+ * log_debug_bin(), log_debug_bin2(), log_trace_bin(), log_trace_bin2()
  * 		got one/two log channels and write string/hex data of the debug type
  */
 #define log_debug_bin(__channel, __data, __length, __message, ...)	\
@@ -137,6 +148,14 @@ typedef unsigned int*			appender_handle_t;
 
 #define log_debug_bin2(__channel, __channel2, __data, __length, __message, ...)	\
 	logger_write(LT_DEBUG|(__channel)|((__channel2)<<LOGGER_CHANNEL_BIT_MAX), \
+				__FILE__, __LINE__, __FUNCTION__, __data, __length, __message, ##__VA_ARGS__)
+
+#define log_trace_bin(__channel, __data, __length, __message, ...)	\
+	logger_write(LT_TRACE|(__channel), __FILE__, __LINE__, __FUNCTION__, \
+				__data, __length, __message, ##__VA_ARGS__)
+
+#define log_trace_bin2(__channel, __channel2, __data, __length, __message, ...)	\
+	logger_write(LT_TRACE|(__channel)|((__channel2)<<LOGGER_CHANNEL_BIT_MAX), \
 				__FILE__, __LINE__, __FUNCTION__, __data, __length, __message, ##__VA_ARGS__)
 
 /*

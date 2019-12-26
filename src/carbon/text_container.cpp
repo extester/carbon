@@ -81,10 +81,10 @@ result_t CTextContainer::expandBuffer(size_t nDelta)
 	nAllocSize = PAGE_ALIGN(nAllocSize);
 
 	if ( isInline() )  {
-		log_debug(L_NET_FL, "[text_cont] alloc: inline buf => ool buf %d bytes\n", nAllocSize);
+		log_trace(L_NET, "[text_cont] alloc: inline buf => ool buf %d bytes\n", nAllocSize);
 	}
 	else {
-		log_debug(L_NET_FL, "[text_cont] realloc: %d => %d bytes\n", m_nCurSize, nAllocSize);
+		log_trace(L_NET, "[text_cont] realloc: %d => %d bytes\n", m_nCurSize, nAllocSize);
 	}
 
 	pBuf = (char*)memRealloc(isInline() ? NULL : m_pBuffer, nAllocSize);
@@ -199,11 +199,11 @@ result_t CTextContainer::receive(CSocketAsync& socket)
 	lenEol = _tstrlen(m_strEol);
 	shell_assert(sizeof(tmpBuf) > lenEol);
 
-	log_debug(L_NET_FL, "[text_cont] current size %d, async receiving...\n", m_nSize);
+	log_trace(L_NET, "[text_cont] current size %d, async receiving...\n", m_nSize);
 
 	while( nresult == ESUCCESS )  {
 		if ( m_nSize >= lenEol && _tmemmem(m_pBuffer, m_nSize, m_strEol, lenEol) != NULL ) {
-			log_debug(L_NET_FL, "[text_cont] current size %d, detected EOL, stop\n", m_nSize);
+			log_trace(L_NET, "[text_cont] current size %d, detected EOL, stop\n", m_nSize);
 			break;
 		}
 
@@ -211,7 +211,7 @@ result_t CTextContainer::receive(CSocketAsync& socket)
 		UNALIGNED_MEMCPY(tmpBuf, &m_pBuffer[m_nSize-n], n);
 		size = sizeof(tmpBuf)-n-1;
 		nresult = socket.receiveLine(tmpBuf, n, &size, m_strEol);
-		log_debug(L_NET_FL, "[text_cont] received size %d, nresult: %d\n", size, nresult);
+		log_trace(L_NET, "[text_cont] received size %d, nresult: %d\n", size, nresult);
 		if ( size > 0 )  {
 			nr = putData(tmpBuf+n, size);
 			/*log_debug(L_NET_FL, "[text_cont] content '%s', put result: %d\n", m_pBuffer, nr);*/

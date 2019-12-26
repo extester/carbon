@@ -52,7 +52,7 @@ void CDnsClientService::doResolve(const dns_request_data_t* pData, seqnum_t nSes
 	const char*		dns1 = pData->dns[1].isValid() ? pData->dns[1].cs() : "";
 	result_t 		nresult;
 
-	log_debug(L_DNS_CLIENT_FL, "[dsn_cli_serv] resolving name '%s' on servers: '%s', '%s'\n",
+	log_trace(L_DNS_CLIENT, "[dsn_cli_serv] resolving name '%s' on servers: '%s', '%s'\n",
 			  	pData->strName.cs(), dns0, dns1);
 
 	nresult = dnsLookup(pData->strName, pData->hrTimeout, dns0, dns1, &inAddr);
@@ -135,7 +135,7 @@ result_t initDnsClientService()
 		g_pDnsClientService = new CDnsClientService();
 		nresult = g_pDnsClientService->init();
 		if ( nresult == ESUCCESS ) {
-			log_debug(L_DNS_CLIENT_FL, "[dns_cli_serv] DNS client service started\n");
+			log_trace(L_DNS_CLIENT, "[dns_cli_serv] DNS client service started\n");
 		}
 		else {
 			log_error(L_DNS_CLIENT, "[dns_cli_serv] CAN'T START DNS CLIENT SERVICE, RESULT %d\n", nresult);
@@ -151,6 +151,6 @@ void terminateDnsClientService()
 	if ( g_pDnsClientService )  {
 		g_pDnsClientService->terminate();
 		SAFE_DELETE(g_pDnsClientService);
-		log_debug(L_DNS_CLIENT_FL, "[dns_cli_serv] DNS client service terminated\n");
+		log_trace(L_DNS_CLIENT, "[dns_cli_serv] DNS client service terminated\n");
 	}
 }

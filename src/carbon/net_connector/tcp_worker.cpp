@@ -105,13 +105,13 @@ void CTcpWorkerItem::processReceive(CSocketRef* pSocket)
 	pContainerOriginal = pParent->getParent()->getRecvTemplRef();
 	pContainer = pContainerOriginal->clone();
 
-	log_debug(L_NETCONN_FL, "[tcpconn_work] receiving a container...\n");
+	log_trace(L_NETCONN, "[tcpconn_work] receiving a container...\n");
     pParent->getTimeouts(0, &hrRecvTimeout);
 
     try {
         nresult = pContainer->receive(*pSocket, hrRecvTimeout);
 		if ( nresult == ESUCCESS )  {
-			log_debug(L_NETCONN_FL, "[tcpconn_work] received a container\n");
+			log_trace(L_NETCONN, "[tcpconn_work] received a container\n");
 		}
         else {
             log_debug(L_NETCONN, "[tcpconn_work] failed to receive container, result: %d\n", nresult);
@@ -176,7 +176,7 @@ void CTcpWorkerItem::processSend(CNetContainer* pContainer, CSocketRef* pSocket,
 
     pParent->getTimeouts(&hrSendTimeout, 0);
 
-	log_debug(L_NETCONN_FL, "[tcpconn_work(%d)] sending a container\n", sessId);
+	log_trace(L_NETCONN, "[tcpconn_work(%d)] sending a container\n", sessId);
     nresult = pContainer->send(*pSocket, hrSendTimeout);
     if ( nresult == ESUCCESS ) {
 		pParent->statSend();
@@ -188,7 +188,7 @@ void CTcpWorkerItem::processSend(CNetContainer* pContainer, CSocketRef* pSocket,
             log_debug(L_NETCONN_IO, "[tcpconn_work] <<< Sent container: %s\n", strTmp);
         }
 		else {
-			log_debug(L_NETCONN_FL, "[tcpconn_work(%d)] container send\n", sessId);
+			log_trace(L_NETCONN, "[tcpconn_work(%d)] container send\n", sessId);
 		}
     }
     else {
@@ -222,7 +222,7 @@ void CTcpWorkerItem::processSendLocal(CNetContainer* pContainer, const char* str
 
 	pParent->getTimeouts(&hrSendTimeout, 0);
 
-	log_debug(L_NETCONN_FL, "[tcpconn_work(%d)] sending a container to '%s'\n",
+	log_trace(L_NETCONN, "[tcpconn_work(%d)] sending a container to '%s'\n",
 			  sessId, strSocket);
 
 	nresult = pSocket->connect(strSocket, pParent->getConnectTimeout(), SOCKET_TYPE_STREAM);
@@ -238,12 +238,12 @@ void CTcpWorkerItem::processSendLocal(CNetContainer* pContainer, const char* str
 				log_debug(L_NETCONN_IO, "[tcpconn_work] <<< Sent container: %s\n", strTmp);
 			}
 			else {
-				log_debug(L_NETCONN_FL, "[tcpconn_work(%d)] container send\n", sessId);
+				log_trace(L_NETCONN, "[tcpconn_work(%d)] container send\n", sessId);
 			}
 		}
 	}
 	else {
-		log_debug(L_NETCONN_FL, "[tcpconn_work(%d)] connection failure, result %d\n", sessId, nresult);
+		log_trace(L_NETCONN, "[tcpconn_work(%d)] connection failure, result %d\n", sessId, nresult);
 		pParent->statFail();
 	}
 
@@ -274,7 +274,7 @@ void CTcpWorkerItem::processIo(CNetContainer* pContainer, const CNetAddr& destAd
     pParent->getTimeouts(&hrSendTimeout, &hrRecvTimeout);
     CPacketIo	IO(hrSendTimeout+hrRecvTimeout+pParent->getConnectTimeout());
 
-	log_debug(L_NETCONN_FL, "[tcpconn_work(%d)] executing I/O...\n", sessId);
+	log_trace(L_NETCONN, "[tcpconn_work(%d)] executing I/O...\n", sessId);
 
     try {
         dec_ptr<CNetContainer>  outContainerPtr = pContainer->clone();
@@ -290,7 +290,7 @@ void CTcpWorkerItem::processIo(CNetContainer* pContainer, const CNetAddr& destAd
                 log_debug(L_NETCONN_IO, "[tcpconn_work] >>> I/O Recv container: %s\n", strTmpIn);
             }
 			else {
-				log_debug(L_NETCONN_FL, "[tcpconn_work(%d)] I/O executed success\n", sessId);
+				log_trace(L_NETCONN, "[tcpconn_work(%d)] I/O executed success\n", sessId);
 			}
 
 			pParent->statRecv();
@@ -445,7 +445,7 @@ result_t CTcpWorkerPool::start()
 
 void CTcpWorkerPool::stop()
 {
-    log_debug(L_NETCONN_FL, "[tcpconn_work] terminating worker pool\n");
+	log_trace(L_NETCONN, "[tcpconn_work] terminating worker pool\n");
     CThreadPool::terminate();
-    log_debug(L_NETCONN_FL, "[tcpconn_work] worker pool has been terminated\n");
+	log_trace(L_NETCONN, "[tcpconn_work] worker pool has been terminated\n");
 }

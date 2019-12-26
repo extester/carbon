@@ -46,10 +46,10 @@ void* CTcpListenServer::thread(CThread* pThread, void* pData)
 {
     pThread->bootCompleted(ESUCCESS);
 
-    log_debug(L_NETCONN_FL, "[tcpconn_listen] starting thread, listen on %s\n",
+    log_trace(L_NETCONN, "[tcpconn_listen] starting thread, listen on %s\n",
                m_strSocket.isEmpty() ? m_listenAddr.cs() : m_strSocket.cs());
     run();
-    log_debug(L_NETCONN_FL, "[tcpconn_listen] thread has been stopped\n");
+	log_trace(L_NETCONN, "[tcpconn_listen] thread has been stopped\n");
 
     return NULL;
 }

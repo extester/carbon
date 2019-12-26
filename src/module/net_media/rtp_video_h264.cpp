@@ -116,7 +116,7 @@ void CRtpVideoH264::timerHandler(void* p)
  */
 void CRtpVideoH264::restart()
 {
-	log_debug(L_RTP_VIDEO_H264_FL, "[video(%s)] restarting...\n", m_strName);
+	log_trace(L_RTP_VIDEO_H264, "[video(%s)] restarting...\n", m_strName);
 
 	setFsmState(VIDEO_FSM_RESTART);
 	m_pClient->disconnect();
@@ -136,7 +136,7 @@ void CRtpVideoH264::onMediaClientConnect(CMediaClient* pClient, result_t nresult
 			_tsnprintf(strBuf, sizeof(strBuf), "connection failure, result %d", nresult);
 		}
 
-		log_debug(L_RTP_VIDEO_H264_FL, "[video(%s)] %s\n", m_strName, strBuf);
+		log_trace(L_RTP_VIDEO_H264, "[video(%s)] %s\n", m_strName, strBuf);
 
 		if ( nresult == ESUCCESS ) {
 			setFsmState(VIDEO_FSM_CONFIGURING);
@@ -156,7 +156,7 @@ void CRtpVideoH264::onMediaClientConfigure(CMediaClient* pClient, result_t nresu
 	fsm_t	fsm = getFsmState();
 
 	if ( fsm == VIDEO_FSM_CONFIGURING ) {
-		log_debug(L_RTP_VIDEO_H264_FL, "[video(%s)] configure result %d\n", m_strName, nresult);
+		log_trace(L_RTP_VIDEO_H264, "[video(%s)] configure result %d\n", m_strName, nresult);
 
 		if ( nresult == ESUCCESS ) {
 			setFsmState(VIDEO_FSM_PLAY);
@@ -176,10 +176,10 @@ void CRtpVideoH264::onMediaClientPlay(CMediaClient* pClient, result_t nresult)
 	fsm_t	fsm = getFsmState();
 
 	if ( fsm == VIDEO_FSM_PLAY ) {
-		log_debug(L_RTP_VIDEO_H264_FL, "[video(%s)] play result %d\n", m_strName, nresult);
+		log_trace(L_RTP_VIDEO_H264, "[video(%s)] play result %d\n", m_strName, nresult);
 
 		if ( nresult == ESUCCESS ) {
-			log_debug(L_RTP_VIDEO_H264_FL, "[video(%s)] -- streaming --\n", m_strName);
+			log_trace(L_RTP_VIDEO_H264, "[video(%s)] -- streaming --\n", m_strName);
 		}
 		else {
 			restart();
@@ -201,7 +201,7 @@ void CRtpVideoH264::onMediaClientDisconnect(CMediaClient* pClient, result_t nres
 {
 	fsm_t	fsm = getFsmState();
 
-	log_debug(L_RTP_VIDEO_H264_FL, "[video(%s)] disconnected, result %d\n", m_strName, nresult);
+	log_trace(L_RTP_VIDEO_H264, "[video(%s)] disconnected, result %d\n", m_strName, nresult);
 
 	shell_assert(m_pClient);
 

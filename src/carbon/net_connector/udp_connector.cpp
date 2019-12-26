@@ -84,7 +84,7 @@ void* CUdpConnector::workerThread(CThread* pThread, void* p)
 							  srcAddr.cs(), strTmp);
 				}
 				else {
-					log_debug(L_NETCONN_FL, "[udpconn] container from %s is received\n", srcAddr.cs());
+					log_trace(L_NETCONN, "[udpconn] container from %s is received\n", srcAddr.cs());
 				}
 
 				notifyReceive(pContainer, srcAddr);
@@ -126,7 +126,7 @@ result_t CUdpConnector::sendSync(CNetContainer* pContainer, const CNetAddr& dstA
 	CSocket		socket((ip_addr_t)dstAddr == INADDR_BROADCAST ? CSocket::broadcast : 0);
 	result_t    nresult;
 
-	log_debug(L_NETCONN_FL, "[udpconn] sending a container to '%s'\n", dstAddr.cs());
+	log_trace(L_NETCONN, "[udpconn] sending a container to '%s'\n", dstAddr.cs());
 
 	nresult = socket.open(m_bindAddr, SOCKET_TYPE_UDP);
 	if ( nresult == ESUCCESS )  {
@@ -140,7 +140,7 @@ result_t CUdpConnector::sendSync(CNetContainer* pContainer, const CNetAddr& dstA
 						  dstAddr.cs(), strTmp);
 			}
 			else {
-				log_debug(L_NETCONN_FL, "[udpconn] container to %s sent\n", dstAddr.cs());
+				log_trace(L_NETCONN, "[udpconn] container to %s sent\n", dstAddr.cs());
 			}
 
 			statSend();

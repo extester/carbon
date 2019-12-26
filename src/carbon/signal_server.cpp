@@ -221,15 +221,15 @@ void CSignalServer::run()
 			}
 
 			if ( bmpSignal&(1<<SIGHUP) )  {
-				log_debug(L_GEN_FL, "[signal_server] signal SIGHUP detected..\n");
+				log_trace(L_GEN, "[signal_server] signal SIGHUP detected..\n");
 				g_pSignalServer->sendEvent(EV_HUP, 0);
 			} else
 			if ( bmpSignal&(1<<SIGUSR1) )  {
-				log_debug(L_GEN_FL, "[signal_server] signal SIGUSR1 detected..\n");
+				log_trace(L_GEN, "[signal_server] signal SIGUSR1 detected..\n");
 				g_pSignalServer->sendEvent(EV_USR1, 0);
 			} else
 			if ( bmpSignal&(1<<SIGUSR2) )  {
-				log_debug(L_GEN_FL, "[signal_server] signal SIGUSR2 detected..\n");
+				log_trace(L_GEN, "[signal_server] signal SIGUSR2 detected..\n");
 				g_pSignalServer->sendEvent(EV_USR2, 0);
 			} else
 			if ( bmpSignal&(1<<SIGINT) ) {
