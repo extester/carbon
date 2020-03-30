@@ -1,5 +1,0 @@
-#!/bin/sh
-
-if [ ! -f Makefile ]; then
-    CROSS_COMPILE=${CROSS_COMPILE} CC=${CC} ./configure $* --with-jemalloc-prefix=je_
-fi
