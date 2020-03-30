@@ -112,6 +112,6 @@ void CFileBreaker::_break()
 		ssize_t n;
 
 		n = ::write(m_fds[1], b, 1);
-		UNUSED(n);
+		shell_unused(n);
 	}
 }

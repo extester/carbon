@@ -13,9 +13,7 @@
  */
 
 #include <stdio.h>
-#ifndef __UCLIBC__
 #include <iconv.h>
-#endif /* __UCLIBC__ */
 #include <unistd.h>
 
 #include "shell/shell.h"
@@ -34,7 +32,7 @@ void copyString(char* strDst, const char* strSrc, size_t nDstLen)
 {
     size_t	l = _tstrlen(strSrc);
 
-    l = MIN(l, (nDstLen-1));
+    l = sh_min(l, (nDstLen-1));
 
     UNALIGNED_MEMCPY(strDst, strSrc, l);
     strDst[l] = '\0';
@@ -50,7 +48,7 @@ void copyString(char* strDst, const char* strSrc, size_t nDstLen)
  */
 void copySubstring(char* strDst, const void* memSrc, size_t nSrcLen, size_t nDstLen)
 {
-    size_t  l = MIN(nSrcLen, (nDstLen-1));
+    size_t  l = sh_min(nSrcLen, (nDstLen-1));
 
     shell_assert(nDstLen != 0);
 

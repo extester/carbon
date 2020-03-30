@@ -77,7 +77,7 @@ result_t CTextContainer::expandBuffer(size_t nDelta)
 	nNewSize = m_nSize + nDelta+1;
 
 	nAllocSize = m_nCurSize ? (m_nCurSize*2) : (TEXT_CONTAINER_INSIZE*2);
-	nAllocSize = MAX(nAllocSize, nNewSize);
+	nAllocSize = sh_max(nAllocSize, nNewSize);
 	nAllocSize = PAGE_ALIGN(nAllocSize);
 
 	if ( isInline() )  {
@@ -183,7 +183,7 @@ result_t CTextContainer::send(CSocketAsync& socket, uint32_t* pOffset)
 	}
 
 	size = m_nSize - (*pOffset);
-	nresult = socket.send(&m_pBuffer[*pOffset], &size);
+	nresult = socket.sendAsync(&m_pBuffer[*pOffset], &size);
 	*pOffset += size;
 
 	return nresult;
@@ -210,7 +210,7 @@ result_t CTextContainer::receive(CSocketAsync& socket)
 		n = m_nSize > lenEol ? lenEol : m_nSize;
 		UNALIGNED_MEMCPY(tmpBuf, &m_pBuffer[m_nSize-n], n);
 		size = sizeof(tmpBuf)-n-1;
-		nresult = socket.receiveLine(tmpBuf, n, &size, m_strEol);
+		nresult = socket.receiveLineAsync(tmpBuf, n, &size, m_strEol);
 		log_trace(L_NET, "[text_cont] received size %d, nresult: %d\n", size, nresult);
 		if ( size > 0 )  {
 			nr = putData(tmpBuf+n, size);

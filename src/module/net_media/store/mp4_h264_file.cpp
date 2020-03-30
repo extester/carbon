@@ -255,7 +255,7 @@ bool CMp4H264File::RefreshReader(nal_reader_t *nal, uint32_t nal_start)
 		nal->buffer = tmp;
 	}
 
-	bytes_read = MIN(nal->size-nal->pos, (int)(nal->buffer_size_max - nal->buffer_size));
+	bytes_read = sh_min(nal->size-nal->pos, (int)(nal->buffer_size_max - nal->buffer_size));
 	UNALIGNED_MEMCPY(nal->buffer + nal->buffer_size, nal->pData+nal->pos, bytes_read);
 	nal->pos += bytes_read;
 	/*bytes_read = fread(nal->buffer + nal->buffer_size,
@@ -982,7 +982,7 @@ result_t CMp4H264File::writeAudioFrame(CMediaFrame* pFrame)
 		m_nAudioBufLen = 0;
 	}
 
-	m_nAudioBufLen = MIN((size_t)size, AUDIO_BUF_SIZE(m_nSamplesPerFrame));
+	m_nAudioBufLen = sh_min((size_t)size, AUDIO_BUF_SIZE(m_nSamplesPerFrame));
 	UNALIGNED_MEMCPY(m_pAudioBuf, pData, m_nAudioBufLen);
 	m_audioTimestamp = pFrame->getTimestamp();
 
@@ -1118,7 +1118,7 @@ result_t CMp4H264File::writeSubtitleFrame(CMediaFrame* pFrame)
 		m_nSubtitleBufLen = 0;
 	}
 
-	m_nSubtitleBufLen = (uint32_t)MIN((size_t)size, sizeof(m_subtitleBuf));
+	m_nSubtitleBufLen = (uint32_t)sh_min((size_t)size, sizeof(m_subtitleBuf));
 	UNALIGNED_MEMCPY(m_subtitleBuf, pData, m_nSubtitleBufLen);
 	m_subtitleTimestamp = pFrame->getTimestamp();
 

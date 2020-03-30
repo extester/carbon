@@ -57,8 +57,8 @@ void* CKeyboardModule::workerThread(CThread* pThread, void* pData)
 	CEvent*		pEvent;
 	boolean_t 	bDone = FALSE;
 
-	UNUSED(pThread);
-	UNUSED(pData);
+	shell_unused(pThread);
+	shell_unused(pData);
 
 	shell_assert(m_pHwKeyboard);
 	shell_assert(m_pReceiver);
@@ -136,5 +136,5 @@ void CKeyboardModule::terminate()
  */
 void CKeyboardModule::dump(const char* strPref) const
 {
-    UNUSED(strPref);
+	shell_unused(strPref);
 }

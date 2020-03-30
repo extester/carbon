@@ -501,7 +501,7 @@ result_t CModemSim900r::send(const void* pBuffer, size_t* pSize, hr_time_t hrTim
 		 * Echo is always ON
 		 * Make buffer long enough to receive unsolicited message
 		 */
-		sizeBuf = MAX(length, MODEM_UNSOLICITED_BUFFER);
+		sizeBuf = sh_max(length, MODEM_UNSOLICITED_BUFFER);
 		strTmpBuffer = (char*) alloca(sizeBuf+1);
 
 		while ( nresult == ESUCCESS ) {
@@ -1374,7 +1374,7 @@ result_t CModemSim900r::httpGetAction(const char* strUrl, hr_time_t hrTimeout,
 	shell_assert(pLength);
 
 	size = _tstrlen(strUrl)+ 32;
-	size = MAX(MODEM_UNSOLICITED_BUFFER, size);
+	size = sh_max(MODEM_UNSOLICITED_BUFFER, size);
 	pBuffer = (char*)alloca(size);
 
 	_tsnprintf(pBuffer, size, "AT+HTTPPARA=\"URL\",\"%s\"", strUrl);
@@ -1472,7 +1472,7 @@ result_t CModemSim900r::httpRead(void* pBuffer, size_t* pSize, size_t offset,
 			count = sscanf(buffer, "+HTTPREAD:%zu", &realSize);
 			if ( count == 1 )  {
 				/* Read raw data */
-				readSize = MIN(realSize, size);
+				readSize = sh_min(realSize, size);
 				nresult = doRecvRaw(pBuffer, &readSize, hr_timeout(hrNow, hrTimeout));
 				if ( nresult == ESUCCESS )  {					
 					/* Read trailing 'OK' */

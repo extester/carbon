@@ -86,7 +86,7 @@ result_t CRawContainer::makeBuffer(size_t nSize)
 			newSize = ALIGN(nSize, 1024);
 		}
 
-		newSize = MIN(newSize, m_nMaxSize);
+		newSize = sh_min(newSize, m_nMaxSize);
 		if ( newSize > m_nSize ) {
 			pBuffer = (uint8_t*)memRealloc(m_pBuffer, newSize);
 			if ( pBuffer ) {
@@ -257,6 +257,6 @@ void CRawContainer::getDump(char* strBuf, size_t length) const
 
 	len = _tsnprintf(strBuf, length, "raw[%u] ", (unsigned)m_nCurSize);
 	if ( (size_t)len < length )  {
-		getDumpHex(&strBuf[len], length-len, m_pBuffer, MIN(m_nCurSize, 16));
+		getDumpHex(&strBuf[len], length-len, m_pBuffer, sh_min(m_nCurSize, 16));
 	}
 }

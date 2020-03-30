@@ -147,8 +147,9 @@ result_t CFileAsync::close()
 
 result_t CFileAsync::setBlocking(boolean_t bBlocking)
 {
-	int 		flags, retVal;
-	result_t	nresult = EBADF;
+	unsigned int	flags;
+	int 			retVal;
+	result_t		nresult = EBADF;
 
 	if ( isOpen() )  {
 		if ( bBlocking )  {
@@ -324,7 +325,7 @@ result_t CFileAsync::getMode(mode_t* pMode) const
  * 		ENODATA			end of file was reached
  * 		...
  */
-result_t CFileAsync::read(void* pBuffer, size_t* pSize)
+result_t CFileAsync::readAsync(void* pBuffer, size_t* pSize)
 {
 	size_t		length, size, l;
 	ssize_t		len;
@@ -391,7 +392,8 @@ result_t CFileAsync::read(void* pBuffer, size_t* pSize)
  * 		ENODATA			eof of file reached
  * 		...
  */
-result_t CFileAsync::readLine(void* pBuffer, size_t nPreSize, size_t* pSize, const char* strEol)
+result_t CFileAsync::readLineAsync(void* pBuffer, size_t nPreSize, size_t* pSize,
+									const char* strEol)
 {
 	size_t		size, length, lenEol;
 	ssize_t		len;
@@ -460,7 +462,7 @@ result_t CFileAsync::readLine(void* pBuffer, size_t nPreSize, size_t* pSize, con
  * 		ENOSPC			can't write data (possible out of space)
  * 		...
  */
-result_t CFileAsync::write(const void* pBuffer, size_t* pSize)
+result_t CFileAsync::writeAsync(const void* pBuffer, size_t* pSize)
 {
 	size_t		length, size, l;
 	ssize_t		len;
@@ -908,7 +910,7 @@ result_t CFile::read(void* pBuffer, size_t* pSize, int options, hr_time_t hrTime
 		nresult = select(hrIterTimeout, CFile::filePollRead, &revents);
 		if ( nresult == ESUCCESS )  {
 			size = (*pSize) - length;
-			nresult = CFileAsync::read(pBuf+length, &size);
+			nresult = readAsync(pBuf+length, &size);
 			length += size;
 
 			if ( length > 0 && !(options&CFile::fileReadFull) )  {
@@ -973,9 +975,9 @@ result_t CFile::readLine(void* pBuffer, size_t* pSize, const char* strEol, hr_ti
 
 		nresult = select(hrIterTimeout, CFile::filePollRead, &revents);
 		if ( nresult == ESUCCESS )  {
-			szPre = MIN(length, lenEol);
+			szPre = sh_min(length, lenEol);
 			size = (*pSize) - length;
-			nresult = CFileAsync::readLine(pBuf+length-szPre, szPre, &size, strEol);
+			nresult = readLineAsync(pBuf+length-szPre, szPre, &size, strEol);
 			length += size;
 		}
 	}
@@ -1023,7 +1025,7 @@ result_t CFile::write(const void* pBuffer, size_t* pSize, hr_time_t hrTimeout)
 		nresult = select(hrIterTimeout, CFile::filePollWrite, &revents);
 		if ( nresult == ESUCCESS )  {
 			size = (*pSize) - length;
-			nresult = CFileAsync::write(pBuf+length, &size);
+			nresult = writeAsync(pBuf+length, &size);
 			length += size;
 		}
 	}
@@ -1174,7 +1176,7 @@ result_t CFile::copyFile(const char* strDestination, const char* strSource)
 					strSource, nresult);
 	}
 
-	szAlloc = (size_t)MIN(COPYFILE_CHUNK_SIZE, szFile);
+	szAlloc = (size_t)sh_min(COPYFILE_CHUNK_SIZE, szFile);
 	pBuffer = memAlloc(szAlloc);
 	if ( pBuffer == NULL )  {
 		log_debug(L_GEN, "[file] failed to allocate buffer of %d bytes\n", szFile);

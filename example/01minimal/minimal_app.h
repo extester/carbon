@@ -1,6 +1,6 @@
 /*
- *	Carbon Framework Examples
- *	Minimal program
+ *  Carbon Framework Examples
+ *  Minimal program
  *
  *  Copyright (c) 2016 Softland. All rights reserved.
  *  Licensed under the Apache License, Version 2.0
@@ -12,8 +12,8 @@
  *	    Initial revision.
  */
 
-#ifndef ___EXAMPLE_MINIMAL_H_INCLUDED__
-#define ___EXAMPLE_MINIMAL_H_INCLUDED__
+#ifndef __EXAMPLE_MINIMAL_H_INCLUDED__
+#define __EXAMPLE_MINIMAL_H_INCLUDED__
 
 #include "carbon/carbon.h"
 #include "carbon/application.h"
@@ -21,14 +21,14 @@
 
 class CMinimalApp : public CApplication
 {
-    public:
-        CMinimalApp(int argc, char* argv[]);
-        virtual ~CMinimalApp();
+	public:
+		CMinimalApp(int argc, char* argv[]);
+		virtual ~CMinimalApp();
 
 	public:
-        virtual result_t init();
-        virtual void terminate();
+		virtual result_t init();
+		virtual void terminate();
 };
 
 
-#endif /* ___EXAMPLE_MINIMAL_H_INCLUDED__ */
+#endif /* __EXAMPLE_MINIMAL_H_INCLUDED__ */

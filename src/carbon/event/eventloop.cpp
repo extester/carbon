@@ -724,7 +724,7 @@ CEventLoopThread::~CEventLoopThread()
  */
 void* CEventLoopThread::thread(CThread* pThread, void* pData)
 {
-	UNUSED(pData);
+	shell_unused(pData);
 
     pThread->bootCompleted(ESUCCESS);
 

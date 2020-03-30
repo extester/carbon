@@ -78,7 +78,7 @@ CJsonItem* CJsonItem::getRoot()
 
 void CJsonItem::dumpIndent(int nIndent, char* strBuf, size_t maxLength) const
 {
-	int 	i, n = MIN(nIndent, (int)maxLength);
+	int 	i, n = sh_min(nIndent, (int)maxLength);
 
 	for(i=0; i<n; i++)  {
 		strBuf[i] = ' ';
@@ -559,8 +559,8 @@ result_t CJsonOA::loadFile(const char* strFilename, json_option_t options)
 	json_error_t	error;
 	result_t		nresult;
 
+	shell_unused(options);
 	shell_assert(strFilename);
-	UNUSED(options);
 
 	if ( CFile::fileExists(strFilename, R_OK) ) {
 		pRoot = json_load_file(strFilename, 0, &error);

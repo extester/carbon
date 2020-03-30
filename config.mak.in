@@ -50,11 +50,12 @@ ifeq ($(CARBON_MACHINE), unix)
 # UNIX specific custom options
 #
 
-CARBON_JEMALLOC=0
+CARBON_MALLOC=1
 CARBON_UDNS=1
 CARBON_JANSSON=1
 CARBON_XML=1
 CARBON_ZLIB=1
+CARBON_DB=0
 
 # Carbon object name buffer length (CObject, CEvent, CTimer, CThread)
 # Default is 48

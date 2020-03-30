@@ -28,7 +28,7 @@ void dumpHex(const void* pData, size_t nLength)
     const uint8_t*  p = (const uint8_t*)pData;
     size_t          i;
 
-    nLength = MIN(nLength, 100);
+    nLength = sh_min(nLength, 100);
     for(i=0; i<nLength; i++)  {
         printf("%02X ", p[i]&0xff);
     }

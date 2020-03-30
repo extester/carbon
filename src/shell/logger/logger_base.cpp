@@ -95,7 +95,7 @@ void logger_syslog_impl(const char* strMessage, ...)
 	static boolean_t	initialised = FALSE;
 
 	if ( !initialised )  {
-		openlog(NULL, SYSLOG_OPTIONS, SYSLOG_FACILITY);
+		::openlog(NULL, SYSLOG_OPTIONS, SYSLOG_FACILITY);
 		initialised = TRUE;
 	}
 
@@ -115,7 +115,7 @@ void logger_copy_string_impl(char* dst, const char* src, size_t n)
 {
     size_t l = _tstrlen(src);
 
-    l = MIN(l, (n-1));
+    l = sh_min(l, (n-1));
     UNALIGNED_MEMCPY(dst, src, l);
     dst[l] = '\0';
 }
@@ -138,14 +138,14 @@ result_t logger_append_file(const char* filename, const void* buf, size_t length
     result_t	nresult = ESUCCESS;
     ssize_t     count;
 
-    handle = open(filename, O_CREAT|O_WRONLY|O_APPEND, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH));
+    handle = ::open(filename, O_CREAT|O_WRONLY|O_APPEND, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH));
     if ( handle >= 0 )  {
-        count = write(handle, buf, length);
+        count = ::write(handle, buf, length);
         if ( count < (ssize_t)length )  {
             nresult = count < 0 ? errno : EIO;
         }
 
-        close(handle);
+        ::close(handle);
     }
     else  {
         nresult = errno;
@@ -691,7 +691,7 @@ result_t CLogger::getChannelData(int nChannel, void* pBuffer, size_t length)
 	result_t	nresult = EINVAL;
 
 	if ( nChannel >= I_DEBUG && nChannel < LOGGER_TYPES )  {
-		len = MIN(length, sizeof(m_arLogger[nChannel].arChannel));
+		len = sh_min(length, sizeof(m_arLogger[nChannel].arChannel));
 		lock();
 		UNALIGNED_MEMCPY(pBuffer, &m_arLogger[nChannel].arChannel, len);
 		unlock();

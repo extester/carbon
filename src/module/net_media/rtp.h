@@ -62,8 +62,14 @@ typedef struct
 	size_t				length;			/* Real frame length (excluding padding bytes) */
 	hr_time_t			hrArriveTime;	/* Frame received timestamp */
 	uint64_t			nSeqNum;		/* Real sequence number */
-	rtp_head_t			head;			/* Frame buffer */
-	uint8_t				__buffer__[ALIGN(RTP_PACKET_LENGTH_MAX-sizeof(rtp_head_t), 128)];
+
+	/* temporary hack
+	rtp_head_t head;
+	uint8_t    __buffer__[ALIGN(RTP_PACKET_LENGTH_MAX - sizeof(rtp_head_t),*/
+	union {
+		rtp_head_t head;            /* Frame buffer */
+		uint8_t    __buffer__[ALIGN(RTP_PACKET_LENGTH_MAX, 128)];
+	};
 } __attribute__ ((packed)) rtp_frame_t;
 
 #define RTP_FRAME_NULL		((rtp_frame_t*)NULL)

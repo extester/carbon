@@ -306,7 +306,7 @@ class CNetClient : public CModule, public CEventLoopThread, public CEventReceive
         }
 
         virtual void getStat(void* pBuffer, size_t nSize) const {
-            size_t rsize = MIN(nSize, sizeof(m_stat));
+            size_t rsize = sh_min(nSize, sizeof(m_stat));
             UNALIGNED_MEMCPY(pBuffer, &m_stat, rsize);
         }
 

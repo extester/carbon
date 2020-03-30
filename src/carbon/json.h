@@ -257,12 +257,15 @@ class CJsonInteger : public CJsonItem
 
 		explicit operator unsigned int() const { return (unsigned int)m_nValue; }
 		explicit operator int() const { return (int)m_nValue; }
+#if 0
 #if __WORDSIZE != 32
 		explicit operator uint32_t() const { return (uint32_t)m_nValue; }
 		explicit operator int32_t() const { return (int32_t)m_nValue; }
 #endif /* __WORDSIZE != 32 */
 		explicit operator uint64_t() const { return (uint64_t)m_nValue; }
 		operator int64_t() const { return m_nValue; }
+#endif
+	operator int64_t() const { return m_nValue; }
 
 		CJsonInteger& operator=(unsigned int nValue) { m_nValue = nValue; return *this; }
 		CJsonInteger& operator=(int nValue) { m_nValue = nValue; return *this; }

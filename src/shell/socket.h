@@ -15,6 +15,10 @@
  *  	Added various connect() functions;
  *  	Added readCorrect() function (to be renamed to read()).
  *
+ *  Revision 1.2, 30.03.2020 18:16:52
+ *  	Renamed CSocketAsync: connect() => connectAsync(),
+ *  	send() => sendAsync(), receive() => receiveAsync().
+ *
  */
 
 #ifndef __SHELL_SOCKET_H_INCLUDED__
@@ -54,7 +58,7 @@ class CSocketAsync
 		int				m_exOption;
 
 	public:
-		CSocketAsync(int exOption = 0) : m_hSocket(-1), m_exOption(exOption) {}
+		explicit CSocketAsync(int exOption = 0) : m_hSocket(-1), m_exOption(exOption) {}
 		virtual ~CSocketAsync() { close(); }
 
 	public:
@@ -66,25 +70,25 @@ class CSocketAsync
 		virtual result_t open(const char* strBindSocket = NULL,
 							  	socket_type_t sockType = SOCKET_TYPE_STREAM);
 
-		virtual result_t connect(const CNetAddr& dstAddr, const CNetAddr& bindAddr,
+		virtual result_t connectAsync(const CNetAddr& dstAddr, const CNetAddr& bindAddr,
 								 socket_type_t sockType = SOCKET_TYPE_STREAM);
-		virtual result_t connect(const CNetAddr& dstAddr,
+		virtual result_t connectAsync(const CNetAddr& dstAddr,
 								 socket_type_t sockType = SOCKET_TYPE_STREAM) {
-			return connect(dstAddr, NETADDR_NULL, sockType);
+			return connectAsync(dstAddr, NETADDR_NULL, sockType);
 		}
 
-		virtual result_t connect(const char* strDstSocket, const char* strBindSocket,
+		virtual result_t connectAsync(const char* strDstSocket, const char* strBindSocket,
 								 	socket_type_t sockType = SOCKET_TYPE_STREAM);
-		virtual result_t connect(const char* strSocket, socket_type_t sockType = SOCKET_TYPE_STREAM) {
-			return connect(strSocket, NULL, sockType);
+		virtual result_t connectAsync(const char* strSocket, socket_type_t sockType = SOCKET_TYPE_STREAM) {
+			return connectAsync(strSocket, NULL, sockType);
 		}
 
 		virtual result_t close();
 
-		virtual result_t send(const void* pBuffer, size_t* pSize,
+		virtual result_t sendAsync(const void* pBuffer, size_t* pSize,
 								const CNetAddr& destAddr = NETADDR_NULL);
-		virtual result_t receive(void* pBuffer, size_t* pSize, CNetAddr* pSrcAddr = NULL);
-		virtual result_t receiveLine(void* pBuffer, size_t nPreSize, size_t* pSize,
+		virtual result_t receiveAsync(void* pBuffer, size_t* pSize, CNetAddr* pSrcAddr = NULL);
+		virtual result_t receiveLineAsync(void* pBuffer, size_t nPreSize, size_t* pSize,
 								const char* strEol);
 
 		CNetAddr getAddr() const;
@@ -127,7 +131,7 @@ class CSocket : public CSocketAsync
 		};
 
 	public:
-		CSocket(int exOption = 0) : CSocketAsync(exOption) {}
+		explicit CSocket(int exOption = 0) : CSocketAsync(exOption) {}
 		virtual ~CSocket() {}
 
 	public:
@@ -192,7 +196,7 @@ class CSocket : public CSocketAsync
 class CSocketRef : public CSocket, public CRefObject __CSocketRef_PARENT
 {
 	public:
-		CSocketRef(int exOption = 0) :
+		explicit CSocketRef(int exOption = 0) :
 			CSocket(exOption),
 			CRefObject()/*,
 			CTrackObject<CSocketRef>()*/
@@ -210,7 +214,7 @@ class CSocketRef : public CSocket, public CRefObject __CSocketRef_PARENT
 #if CARBON_DEBUG_DUMP
 		virtual void dump(const char* strPref = "") const;
 #else /* CARBON_DEBUG_DUMP */
-		virtual void dump(const char* strPref = "") const { UNUSED(strPref); }
+		virtual void dump(const char* strPref = "") const { shell_unused(strPref); }
 #endif /* CARBON_DEBUG_DUMP */
 };
 

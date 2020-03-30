@@ -207,7 +207,7 @@ CNetAddr CSocketAsync::getAddr() const
  */
 result_t CSocketAsync::open(const CNetAddr& bindAddr, socket_type_t sockType)
 {
-	int			fd, on, retVal;
+	int			fd, on, retVal, proto;
 	result_t	nresult;
 
 	if ( isOpen() )  {
@@ -220,11 +220,14 @@ result_t CSocketAsync::open(const CNetAddr& bindAddr, socket_type_t sockType)
 	 */
 	ASSERT_SOCKET_TYPE(sockType);
 
-	fd = ::socket(AF_INET, SOCKET_TYPE_NONBLOCK|sockType, 0);
+	proto = (sockType&(~(SOCKET_TYPE_CLOEXEC|SOCKET_TYPE_NONBLOCK))) == SOCKET_TYPE_RAW
+				? IPPROTO_ICMP : 0;
+
+	fd = ::socket(AF_INET, SOCKET_TYPE_NONBLOCK|sockType, proto);
 	if ( fd < 0 )  {
 		nresult = errno;
-		log_error(L_SOCKET, "[socket] failed to create socket type %Xh, result: %d\n",
-				  sockType, nresult);
+		log_error(L_SOCKET, "[socket] failed to create socket type %Xh, result: %d (%s)\n",
+				  sockType, nresult, strerror(nresult));
 		return nresult;
 	}
 
@@ -244,14 +247,14 @@ result_t CSocketAsync::open(const CNetAddr& bindAddr, socket_type_t sockType)
 		setOption(fd, SO_BROADCAST, 1);
 	}
 
-	if ( (sockType&(~(SOCKET_TYPE_CLOEXEC|SOCKET_TYPE_NONBLOCK))) == SOCKET_TYPE_RAW )  {
+	if ( proto == IPPROTO_ICMP )  {
 		on = 1;
 		retVal = ::setsockopt(fd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on));
 		if ( retVal < 0 ) {
 			nresult = errno;
 			::close(fd);
-			log_error(L_SOCKET, "[socket] can't set IP_HRDINCL, socket %s, result: %d\n",
-					  	bindAddr.cs(), nresult);
+			log_error(L_SOCKET, "[socket] can't set IP_HRDINCL, socket %s, result: %d(%s)\n",
+					  	bindAddr.cs(), nresult, strerror(nresult));
 			return nresult;
 		}
 	}
@@ -359,7 +362,7 @@ result_t CSocketAsync::open(const char* strBindSocket, socket_type_t sockType)
  *
  * Return: ESUCCESS, ...
  */
-result_t CSocketAsync::connect(const CNetAddr& dstAddr, const CNetAddr& bindAddr,
+result_t CSocketAsync::connectAsync(const CNetAddr& dstAddr, const CNetAddr& bindAddr,
 							   socket_type_t sockType)
 {
 	struct sockaddr_in  sockaddr;
@@ -418,7 +421,7 @@ result_t CSocketAsync::connect(const CNetAddr& dstAddr, const CNetAddr& bindAddr
  *
  * Return: ESUCCESS, ...
  */
-result_t CSocketAsync::connect(const char* strDstSocket, const char* strBindSocket,
+result_t CSocketAsync::connectAsync(const char* strDstSocket, const char* strBindSocket,
 							   	socket_type_t sockType)
 {
 	struct sockaddr_un 	sockaddr;
@@ -495,7 +498,7 @@ result_t CSocketAsync::close()
  * 		EINTR			interrupted by signal
  * 		...
  */
-result_t CSocketAsync::send(const void* pBuffer, size_t* pSize, const CNetAddr& destAddr)
+result_t CSocketAsync::sendAsync(const void* pBuffer, size_t* pSize, const CNetAddr& destAddr)
 {
 	struct sockaddr_in	sockaddr;
 	struct sockaddr*	psockaddr = NULL;
@@ -578,7 +581,7 @@ result_t CSocketAsync::send(const void* pBuffer, size_t* pSize, const CNetAddr& 
  * 		EINTR			interrupted by signal
  * 		...
  */
-result_t CSocketAsync::receive(void* pBuffer, size_t* pSize, CNetAddr* pSrcAddr)
+result_t CSocketAsync::receiveAsync(void* pBuffer, size_t* pSize, CNetAddr* pSrcAddr)
 {
 	struct sockaddr_in	sockaddr;
 	socklen_t 			sockaddrlen;
@@ -657,7 +660,7 @@ result_t CSocketAsync::receive(void* pBuffer, size_t* pSize, CNetAddr* pSrcAddr)
  * 		EINTR			interrupted by signal
  * 		...
  */
-result_t CSocketAsync::receiveLine(void* pBuffer, size_t nPreSize, size_t* pSize,
+result_t CSocketAsync::receiveLineAsync(void* pBuffer, size_t nPreSize, size_t* pSize,
 								   const char* strEol)
 {
 	size_t				size, length, lenEol;
@@ -862,7 +865,7 @@ result_t CSocket::connect(const CNetAddr& dstAddr, hr_time_t hrTimeout,
 {
 	result_t	nresult;
 
-	nresult = CSocketAsync::connect(dstAddr, bindAddr, sockType);
+	nresult = connectAsync(dstAddr, bindAddr, sockType);
 	if ( nresult != ESUCCESS )  {
 		if ( nresult == EINPROGRESS )  {
 			/*
@@ -904,7 +907,7 @@ result_t CSocket::connect(const char* strDstSocket, hr_time_t hrTimeout,
 {
 	result_t	nresult;
 
-	nresult = CSocketAsync::connect(strDstSocket, strBindSocket, sockType);
+	nresult = connectAsync(strDstSocket, strBindSocket, sockType);
 	if ( nresult != ESUCCESS )  {
 		if ( nresult == EINPROGRESS )  {
 			/*
@@ -952,7 +955,7 @@ result_t CSocket::send(const void* pBuffer, size_t* pSize, hr_time_t hrTimeout,
 		nresult = select(hr_timeout(hrStart, hrTimeout), pollWrite, &revents);
 		if ( nresult == ESUCCESS )  {
 			size = (*pSize) - length;
-			nresult = CSocketAsync::send(pBuf+length, &size, destAddr);
+			nresult = sendAsync(pBuf+length, &size, destAddr);
 			length += size;
 		}
 	}
@@ -982,7 +985,7 @@ result_t CSocket::receive(void* pBuffer, size_t* pSize, int options,
 		nresult = select(hr_timeout(hrStart, hrTimeout), pollRead, &revents);
 		if ( nresult == ESUCCESS )  {
 			size = (*pSize) - length;
-			nresult = CSocketAsync::receive(pBuf+length, &size, pSrcAddr);
+			nresult = receiveAsync(pBuf+length, &size, pSrcAddr);
 			length += size;
 
 			if ( !(options&CSocket::readFull) )  {
@@ -1044,9 +1047,9 @@ result_t CSocket::receiveLine(void* pBuffer, size_t* pSize, const char* strEol,
 	while ( *pSize > length && nresult == EAGAIN )  {
 		nresult = select(hr_timeout(hrStart, hrTimeout), pollRead, &revents);
 		if ( nresult == ESUCCESS )  {
-			szPre = MIN(length, lenEol);
+			szPre = sh_min(length, lenEol);
 			size = (*pSize) - length;
-			nresult = CSocketAsync::receiveLine(pBuf+length-szPre, szPre, &size, strEol);
+			nresult = receiveLineAsync(pBuf+length-szPre, szPre, &size, strEol);
 			length += size;
 		}
 	}

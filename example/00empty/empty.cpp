@@ -1,8 +1,9 @@
 /*
- *	Carbon Framework
- *	Empty application for education purpose
+ *  Carbon Framework
+ *  Empty application for the education purpose
  *
  *  Copyright (c) 2017 Softland. All rights reserved.
+ *  Licensed under the Apache License, Version 2.0
  */
 /*
  *	Revision history:

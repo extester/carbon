@@ -169,7 +169,7 @@ void CRemoteEventService::terminate()
 
 void CRemoteEventService::dump(const char* strPref) const
 {
-	UNUSED(strPref);
+	shell_unused(strPref);
 }
 
 #endif /* CARBON_DEBUG_DUMP */

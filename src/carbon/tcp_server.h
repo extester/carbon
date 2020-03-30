@@ -25,35 +25,48 @@ class CTcpServer : public CObject
 {
 	protected:
 		CSocketRef*			m_pSocket;			/* Using socket object */
-		CNetAddr			m_listenAddr;		/* Address to listen on */
+		CNetAddr			m_servAddr;		/* Address to listen on */
 		CString				m_strSocket;		/* Socket to listen on */
 		atomic_t			m_nStop;			/* TRUE: stopping server */
 
 	public:
-		CTcpServer(const char* strName);
+		explicit CTcpServer(const char* strName);
 		virtual ~CTcpServer();
 
 	public:
 		virtual result_t run();
 		virtual void stop() { atomic_inc(&m_nStop); }
 
-	protected:
-		virtual void setListenAddr(const CNetAddr& listenAddr)  {
-			m_listenAddr = listenAddr;
+	public:
+		boolean_t isAddrLocal() const {
+			return !m_strSocket.isEmpty();
 		}
 
-		virtual void setListenAddr(const char* strSocket) {
+		boolean_t isAddrValid() const {
+			return !isAddrLocal() ? m_servAddr.isValid() : TRUE;
+		}
+		const char* servAddrStr() const {
+			return isAddrLocal() ? m_strSocket.cs() : m_servAddr.cs();
+		}
+
+		virtual void setAddr(const CNetAddr& servAddr)  {
+			m_servAddr = servAddr;
+			m_strSocket.clear();
+		}
+
+		virtual void setAddr(const char* strSocket) {
 			m_strSocket = strSocket;
 		}
 
-		virtual void getListenAddr(CNetAddr& listenAddr) const {
-			listenAddr = m_listenAddr;
+		virtual void getAddr(CNetAddr& servAddr) const {
+			servAddr = m_servAddr;
 		}
 
-		virtual void getListenAddr(CString& strSocket) const {
+		virtual void getAddr(CString& strSocket) const {
 			strSocket = m_strSocket;
 		}
 
+	protected:
 		virtual boolean_t isStopping() const {
 			return atomic_get(&m_nStop) != 0;
 		}

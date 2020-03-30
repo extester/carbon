@@ -28,7 +28,7 @@
 
 CTcpServer::CTcpServer(const char* strName) :
 	CObject(strName),
-	m_listenAddr(NETADDR_NULL)
+	m_servAddr(NETADDR_NULL)
 {
 	m_pSocket = new CSocketRef();
 	atomic_set(&m_nStop, 0);
@@ -49,24 +49,29 @@ result_t CTcpServer::run()
 	m_pSocket->close();
 	atomic_set(&m_nStop, 0);
 
-	if ( m_strSocket.isEmpty() ) {
-		nresult = m_pSocket->open(m_listenAddr, (socket_type_t)(SOCKET_TYPE_STREAM|SOCKET_TYPE_CLOEXEC));
+	if ( !isAddrLocal() ) {
+		/*
+		 * Specified an ip address to listen on
+		 */
+		nresult = m_pSocket->open(m_servAddr, (socket_type_t)(SOCKET_TYPE_STREAM|SOCKET_TYPE_CLOEXEC));
 	}
 	else {
+		/*
+		 * Specified an UNIX local socket path to listen on
+		 */
 		nresult = m_pSocket->open(m_strSocket, (socket_type_t)(SOCKET_TYPE_STREAM|SOCKET_TYPE_CLOEXEC));
 	}
+
 	if ( nresult != ESUCCESS )  {
 		log_debug(L_GEN, "[tcp_server] failed to open socket %s, result %d\n",
-				  m_strSocket.isEmpty() ? m_listenAddr.cs() : m_strSocket.cs(), nresult);
+				  servAddrStr(), nresult);
 		return nresult;
 	}
 
 	nresult = m_pSocket->listen(TCP_SERVER_LISTEN_QUEUE_MAX);
 	if ( nresult != ESUCCESS )  {
 		log_debug(L_GEN, "[tcp_server] failed to listen on %s, max connections %d, "
-							"result %d\n", m_strSocket.isEmpty() ?
-							m_listenAddr.cs() : m_strSocket.cs(),
-							TCP_SERVER_LISTEN_QUEUE_MAX, nresult);
+							"result %d\n", servAddrStr(), TCP_SERVER_LISTEN_QUEUE_MAX, nresult);
 		m_pSocket->close();
 		return nresult;
 	}
@@ -97,7 +102,7 @@ result_t CTcpServer::run()
 
 		if ( nresult != ESUCCESS )  {
 			log_debug(L_GEN, "[tcp_server] select failed, result %d\n", nresult);
-			sleep_s(1);
+			hr_sleep(HR_1SEC);
 		}
 	}
 

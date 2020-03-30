@@ -50,7 +50,7 @@ class CRtcpClient : public CModule, public CEventReceiver
 		virtual ~CRtcpClient();
 
 	public:
-		virtual result_t init(const CNetHost& serverHost, ip_port_t nRtcpPort,
+		virtual result_t init2(const CNetHost& serverHost, ip_port_t nRtcpPort,
 							  ip_port_t nRtcpServerPort, uint32_t nServerSsrc);
 		virtual void terminate();
 

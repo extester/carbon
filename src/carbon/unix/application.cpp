@@ -11,7 +11,7 @@
  *  Revision 1.0, 20.06.2015 22:54:31
  *      Initial revision.
  *
- *  Revisiion 1.1, 14.08.2017 14:17:30
+ *  Revision 1.1, 14.08.2017 14:17:30
  *  	Fixed parseAppPath(), changed strPath size to PATH_MAX
  */
 
@@ -315,7 +315,7 @@ void CApplication::stopApplication(int nExitCode)
 
 void CApplication::dump(const char* strPref) const
 {
-	UNUSED(strPref);
+	shell_unused(strPref);
 }
 
 #endif /* CARBON_DEBUG_DUMP */

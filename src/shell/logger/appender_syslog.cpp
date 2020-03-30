@@ -73,7 +73,7 @@ result_t CAppenderSyslog::append(const void* pData, size_t nLength)
 	char*		strBuf;
 	size_t		len;
 
-	len = MIN(LOGGER_BUFFER_MAX, nLength);
+	len = sh_min(LOGGER_BUFFER_MAX, nLength);
 	strBuf = (char*)alloca(len);
 	logger_copy_string_impl(strBuf, (const char*)pData, len);
 

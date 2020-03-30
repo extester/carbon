@@ -13,9 +13,7 @@
  */
 
 #include <stdio.h>
-#ifndef __UCLIBC__
 #include <iconv.h>
-#endif /* __UNLIBC__ */
 #include <unistd.h>
 
 #include "shell/shell.h"
@@ -38,7 +36,6 @@
 result_t convertEncoding(const char* incode, const char* outcode,
                      const char* inbuf, size_t insize, char* outbuf, size_t* poutsize)
 {
-#ifndef __UCLIBC__
     iconv_t		ihandle;
     size_t		size, outsize = *poutsize;
     char*		ss = const_cast<char*>(inbuf);
@@ -90,16 +87,6 @@ result_t convertEncoding(const char* incode, const char* outcode,
 
     iconv_close(ihandle);
     return nresult;
-#else /* __UCLIBC__ */
-	UNUSED(incode);
-	UNUSED(outcode);
-	UNUSED(inbuf);
-	UNUSED(insize);
-	UNUSED(outbuf);
-	UNUSED(poutsize);
-	log_error(L_ALWAYS_ENABLED, "convertEncoding() is not implemented\n");
-	return EINVAL;
-#endif /* __UCLIBC__ */
 }
 
 /*

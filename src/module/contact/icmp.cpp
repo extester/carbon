@@ -198,7 +198,7 @@ result_t CICmp::processActivity(ping_request_t* pPing, int index)
             if ( pPing->ioLen < ICMP_PACKET_TOTAL_LENGTH) {
                 size = ICMP_PACKET_TOTAL_LENGTH - pPing->ioLen;
 
-                nr = pPing->socket.send(&pPing->ioBuffer[pPing->ioLen],
+                nr = pPing->socket.sendAsync(&pPing->ioBuffer[pPing->ioLen],
                                           &size, pPing->dstHost);
                 /*log_debug(L_ICMP_FL, "[cmp_io] continue sending, sent size: %d result: %d (%s)\n",
                           size, nr, strerror(nr));*/
@@ -233,8 +233,8 @@ result_t CICmp::processActivity(ping_request_t* pPing, int index)
             if ( pPing->ioLen < ICMP_PACKET_TOTAL_LENGTH) {
                 size = ICMP_PACKET_TOTAL_LENGTH - pPing->ioLen;
 
-                nr = pPing->socket.receive(&pPing->ioBuffer[pPing->ioLen], &size);
-                /*log_debug(L_ICMP_FL, "[cmp_io] continue receiving, recv size: %d result: %d (%s)\n",
+                nr = pPing->socket.receiveAsync(&pPing->ioBuffer[pPing->ioLen], &size);
+				/*log_debug(L_ICMP, "[cmp_io] continue receiving, recv size: %d result: %d (%s)\n",
                           size, nr, strerror(nr));*/
                 pPing->ioLen += size;
 
@@ -264,7 +264,7 @@ result_t CICmp::processActivity(ping_request_t* pPing, int index)
                 pIp = (struct ip *) pPing->ioBuffer;
                 CNetHost src(pIp->ip_src), dst(pIp->ip_dst);
 
-                log_debug(L_ICMP_FL, "[cmp_io] received REPLY, %s => %s\n",
+                log_debug(L_ICMP, "[cmp_io] received REPLY, %s => %s\n",
                           (const char *) src, (const char *) dst);
             }*/
 
@@ -553,7 +553,8 @@ result_t CICmp::doMultiPing(ping_request_t* arPing, int count, int iterationCoun
         }
         else {
             log_error(L_ICMP, "[icmp(%d)] %s: failed to open raw socket for "
-                    "destination %s, result: %d\n", i, m_strTitle, pPing->dstHost.cs());
+                    "destination %s, result: %d\n", i, m_strTitle,
+                    pPing->dstHost.cs(), nr);
         }
     }
 

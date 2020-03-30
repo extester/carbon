@@ -64,12 +64,12 @@ class CFileAsync
 		virtual result_t create(const char* strFile, int options, mode_t mode = 0);
 		virtual result_t close();
 
-		virtual result_t setBlocking(boolean_t bBlocking);
+		result_t setBlocking(boolean_t bBlocking);
 
-		virtual result_t read(void* pBuffer, size_t* pSize);
-		virtual result_t readLine(void* pBuffer, size_t nPreSize,
-									 size_t* pSize, const char* strEol);
-		virtual result_t write(const void* pBuffer, size_t* pSize);
+		result_t readAsync(void* pBuffer, size_t* pSize);
+		result_t readLineAsync(void* pBuffer, size_t nPreSize, size_t* pSize,
+								const char* strEol);
+		result_t writeAsync(const void* pBuffer, size_t* pSize);
 
 		virtual result_t setPos(off_t offset, int options);
 		virtual result_t getPos(off_t* pOffset) const;

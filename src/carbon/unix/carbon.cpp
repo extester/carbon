@@ -40,7 +40,7 @@ void carbon_init()
     shell_assert(!g_pMemoryManager);
     g_pMemoryManager = new CMemoryManager();
     nresult = g_pMemoryManager->init();
-    shell_assert(nresult == ESUCCESS); UNUSED(nresult);
+    shell_assert(nresult == ESUCCESS); shell_unused(nresult);
 
     /* Initialise logger including STDOUT appender, all levels/channels are enabled */
     logger_init(TRUE);

@@ -345,7 +345,7 @@ result_t CConfig::set(const char* strPath, const char* strValue)
 
         e = _tstrchr(s, '/');
         if ( e ) {
-            size_t  l = MIN(sizeof(strElem)-1, A(e)-A(s));
+            size_t  l = sh_min(sizeof(strElem)-1, A(e)-A(s));
 
             UNALIGNED_MEMCPY(strElem, s, l);
             strElem[l] = '\0';

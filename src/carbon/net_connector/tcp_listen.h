@@ -60,17 +60,17 @@ class CTcpListenServer : public CTcpServer
         virtual result_t start();
         virtual void stop();
 
-        const CNetAddr& getListenAddr() const {
-            return m_listenAddr;
-        }
+        //const CNetAddr& getListenAddr() const {
+        //    return m_listenAddr;
+        //}
 
-        virtual void setListenAddr(const CNetAddr& listenAddr) {
-            CTcpServer::setListenAddr(listenAddr);
-        }
+        //virtual void setListenAddr(const CNetAddr& listenAddr) {
+        //    CTcpServer::setListenAddr(listenAddr);
+        //}
 
-        virtual void setListenAddr(const char* strSocket) {
-            CTcpServer::setListenAddr(strSocket);
-        }
+        //virtual void setListenAddr(const char* strSocket) {
+        //    CTcpServer::setListenAddr(strSocket);
+        //}
 
     private:
         virtual result_t processClient(CSocketRef* pSocket);

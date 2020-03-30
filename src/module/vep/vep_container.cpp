@@ -195,7 +195,7 @@ result_t CVepContainer::insertPacket(vep_packet_type_t packType)
  *
  * 		packType		packet type
  * 		pData			packet header pointer (type and length are ignored)
- * 		nSize			packet size including header
+ * 		nSize			packet size excluding header
  *
  * Return: ESUCCESS, ENOSPC, ENOMEM
  */
@@ -206,17 +206,18 @@ result_t CVepContainer::insertPacket(vep_packet_type_t packType,
 
 	shell_assert(packType != VEP_PACKET_TYPE_NULL);
 	shell_assert(pData);
-	shell_assert(nSize >= VEP_PACKET_HEAD_SZ);
+	//shell_assert(nSize >= VEP_PACKET_HEAD_SZ);
 
-	if ( packType == VEP_PACKET_TYPE_NULL || pData == NULL || nSize < VEP_PACKET_HEAD_SZ )  {
+	if ( packType == VEP_PACKET_TYPE_NULL || (pData == NULL && nSize > 0) )  {
 		log_error(L_GEN, "[vep_cont] wrong data\n");
 		return EINVAL;
 	}
 
 	nresult = insertPacket(packType);
 	if ( nresult == ESUCCESS )  {
-		nresult = m_arPacket[getPackets()-1]->putData((uint8_t*)pData+VEP_PACKET_HEAD_SZ,
-													  nSize-VEP_PACKET_HEAD_SZ);
+//		nresult = m_arPacket[getPackets()-1]->putData((uint8_t*)pData+VEP_PACKET_HEAD_SZ,
+//													  nSize-VEP_PACKET_HEAD_SZ);
+		nresult = m_arPacket[getPackets()-1]->putData(pData, nSize);
 		if ( nresult != ESUCCESS )  {
 			deletePacket(getPackets()-1);
 		}
@@ -365,7 +366,7 @@ result_t CVepContainer::unserialise(const vep_container_head_t* pHead)
 		size_t						lpack = pPack->length+VEP_PACKET_HEAD_SZ;
 
 		if ( (pHead->length-l) >= lpack )  {
-			nresult = insertPacket(pPack->type, p, lpack);
+			nresult = insertPacket(pPack->type, p+VEP_PACKET_HEAD_SZ, lpack-VEP_PACKET_HEAD_SZ);
 			if ( nresult == ESUCCESS )  {
 				p += lpack;
 				l += lpack;

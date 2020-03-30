@@ -46,10 +46,9 @@ void* CTcpListenServer::thread(CThread* pThread, void* pData)
 {
     pThread->bootCompleted(ESUCCESS);
 
-    log_trace(L_NETCONN, "[tcpconn_listen] starting thread, listen on %s\n",
-               m_strSocket.isEmpty() ? m_listenAddr.cs() : m_strSocket.cs());
+    log_trace(L_NETCONN, "[tcpconn_listen] starting thread, listen on %s\n", servAddrStr());
     run();
-	log_trace(L_NETCONN, "[tcpconn_listen] thread has been stopped\n");
+	log_trace(L_NETCONN, "[tcpconn_listen] thread listen on %s has been stopped\n", servAddrStr());
 
     return NULL;
 }
@@ -104,7 +103,7 @@ result_t CTcpListenServer::start()
 {
     result_t	nresult;
 
-	shell_assert(m_listenAddr.isValid() || !m_strSocket.isEmpty());
+	shell_assert(isAddrValid());
 
 	nresult = m_thServer.start(THREAD_CALLBACK(CTcpListenServer::thread, this));
     if ( nresult != ESUCCESS )  {

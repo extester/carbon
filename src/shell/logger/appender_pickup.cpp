@@ -321,7 +321,7 @@ result_t CAppenderPickup::getBlock(void* pBuffer, size_t* pSize)
 		return ESUCCESS;
 	}
 
-	szBlock = MIN(*pSize, m_nSize);
+	szBlock = sh_min(*pSize, m_nSize);
 	nresult = readBlock(pBuffer, &szBlock);
 	if ( nresult == ESUCCESS )  {
 		*pSize = szBlock;
@@ -342,7 +342,7 @@ void CAppenderPickup::getBlockConfirm(size_t size)
 {
 	lock();
 	if ( m_szLastBlock > 0 )  {
-		dropBlock(MIN(m_szLastBlock, size));
+		dropBlock(sh_min(m_szLastBlock, size));
 		m_szLastBlock = 0;
 	}
 	unlock();

@@ -1,14 +1,14 @@
 /*
- *	Carbon Framework Examples
- *	Minimal program
+ *  Carbon Framework Examples
+ *  Minimal program
  *
  *  Copyright (c) 2016 Softland. All rights reserved.
  *  Licensed under the Apache License, Version 2.0
  */
 /*
- *	Revision history:
+ *  Revision history:
  *
- *	Revision 1.0, 01.06.2016 10:51:22
+ *  Revision 1.0, 01.06.2016 10:51:22
  *	    Initial revision.
  */
 

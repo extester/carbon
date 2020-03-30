@@ -508,7 +508,7 @@ result_t CHttpContainer::receive(CSocket& socket, hr_time_t hrTimeout, CNetAddr*
 				if ( contentLength >= 0 )  {
 					/* Content-Length was specified */
 					if ( contentLength > (int)m_nCurSize )  {
-						length = MIN(sizeof(strBuf), contentLength-m_nCurSize);
+						length = sh_min(sizeof(strBuf), contentLength-m_nCurSize);
 						nresult = socket.receive(strBuf, &length, CSocket::readFull,
 												 hr_timeout(hrNow, hrTimeout));
 						if ( nresult == ESUCCESS )  {

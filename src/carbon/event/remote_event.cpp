@@ -163,7 +163,7 @@ CNetContainer* CRemoteEventContainer::clone()
 
 void CRemoteEventContainer::dump(const char* strPref) const
 {
-	UNUSED(strPref);
+	shell_unused(strPref);
 }
 
 void CRemoteEventContainer::getDump(char* strBuf, size_t length) const

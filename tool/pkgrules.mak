@@ -91,10 +91,6 @@ ifeq ($(CARBON_MACHINE),unix)
 LDFLAGS += -pthread
 endif
 
-ifeq ($(CARBON_JEMALLOC),1)
-_LIBS += -ljemalloc
-endif
-
 ifeq ($(CARBON_UDNS),1)
 _LIBS += -ludns
 endif
@@ -109,6 +105,10 @@ endif
 
 ifeq ($(CARBON_ZLIB),1)
 _LIBS += -lz
+endif
+
+ifeq ($(CARBON_DB),1)
+_LIBS += -lsqlite3
 endif
 
 %.o: %.cpp $(DEPS) Makefile

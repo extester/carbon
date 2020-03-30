@@ -52,7 +52,7 @@ CRtpVideoH264::CRtpVideoH264(uint32_t id, const CNetAddr& selfAddr,
 		m_pEventLoop = appMainLoop();
 	}
 
-	m_pChannel = new CRtspChannelH264(id, nRtpPort, nFps, nRtpMaxDelay, pSink, strName);
+	m_pChannel = new CRtspChannelH264(id, nRtpPort, nFps, nRtpMaxDelay, m_pSink, strName);
 	m_pClient = new CMediaClient(selfAddr, m_pEventLoop, this, strName);
 	m_pClient->insertChannel(m_pChannel);
 }
@@ -192,8 +192,8 @@ void CRtpVideoH264::onMediaClientPlay(CMediaClient* pClient, result_t nresult)
 
 void CRtpVideoH264::onMediaClientPause(CMediaClient* pClient, result_t nresult)
 {
-	UNUSED(pClient);
-	UNUSED(nresult);
+	shell_unused(pClient);
+	shell_unused(nresult);
 	shell_assert(FALSE);
 }
 

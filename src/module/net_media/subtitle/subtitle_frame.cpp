@@ -51,7 +51,7 @@ void CSubtitleFrame::setData(uint64_t timestamp, hr_time_t hrPts, const char* st
 
 	if ( strText != 0 && *strText != '\0') {
 		length = (uint16_t)strlen(strText);
-		length = (uint16_t)MIN(length, NET_MEDIA_SUBTITLE_LENGTH-2);
+		length = (uint16_t)sh_min(length, NET_MEDIA_SUBTITLE_LENGTH-2);
 
 		pData->length = htons(length);
 		UNALIGNED_MEMCPY(pData->data, strText, length);

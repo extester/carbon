@@ -442,7 +442,7 @@ result_t CTcpConnector::startListen(const CNetAddr& listenAddr)
 {
     result_t    nresult;
 
-	m_pListenServer->setListenAddr(listenAddr);
+	m_pListenServer->setAddr(listenAddr);
     nresult = m_pListenServer->start();
 
     return nresult;
@@ -452,7 +452,7 @@ result_t CTcpConnector::startListen(const char* strSocket)
 {
 	result_t    nresult;
 
-	m_pListenServer->setListenAddr(strSocket);
+	m_pListenServer->setAddr(strSocket);
 	nresult = m_pListenServer->start();
 
 	return nresult;

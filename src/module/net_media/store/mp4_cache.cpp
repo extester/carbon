@@ -146,7 +146,7 @@ result_t CMp4CacheItem::write(const void* pBuffer, int64_t size, int64_t* nout,
 	size_t			nBlockSize = m_pParent->getCacheBufferSize();
 	result_t		nresult = ESUCCESS, nr;
 
-	l = MIN(length, (int)(nBlockSize-m_nSize));
+	l = sh_min(length, (int)(nBlockSize-m_nSize));
 	if ( l > 0 )  {
 		UNALIGNED_MEMCPY(&m_pBuffer[m_nSize], p, l);
 		length -= l;
@@ -274,7 +274,8 @@ void CMp4Cache::insertItem(CMp4CacheItem* pItem)
 	std::pair<std::map<void*, CMp4CacheItem*>::iterator, bool>	result;
 
 	result = m_file.insert(std::pair<void*, CMp4CacheItem*>(pItem, pItem));
-	shell_assert(result.second != false); UNUSED(result);
+	shell_assert(result.second != false);
+	shell_unused(result);
 }
 
 void CMp4Cache::deleteItem(CMp4CacheItem* pItem)

@@ -15,33 +15,13 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <sys/sysinfo.h>
-#ifndef __UCLIBC__
 #include <execinfo.h>
-#endif /* __UCLIBC__ */
 
 #include "shell/shell.h"
 #include "shell/logger.h"
 #include "shell/debug.h"
 
 #define BACKTRACE_FRAMES		24
-
-#ifdef __UCLIBC__
-
-static int backtrace (void **__array, int __size)
-{
-	UNUSED(__array);
-	UNUSED(__size);
-	return 0;
-}
-
-static char **backtrace_symbols (void *const *__array, int __size)
-{
-	UNUSED(__array);
-	UNUSED(__size);
-	return 0;
-}
-
-#endif /* __UCLIBC__ */
 
 
 /*
@@ -100,7 +80,7 @@ int getFreeMemory(int* pFullMemory)
         char*   s;
 
         s = fgets(buf, 127, fp);
-        UNUSED(s);
+		shell_unused(s);
     }
     fclose(fp);
 

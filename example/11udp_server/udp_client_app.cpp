@@ -73,7 +73,7 @@ void CUdpClientApp::sendMessage()
 
 void CUdpClientApp::timerHandler(void* pData)
 {
-	UNUSED(pData);
+	shell_unused(pData);
 	sendMessage();
 }
 

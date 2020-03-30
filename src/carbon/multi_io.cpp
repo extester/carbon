@@ -136,7 +136,7 @@ result_t CMultiIo::multiIo(multi_io_t* arMio, int count, hr_time_t hrTimeout)
 		pMio = &arMio[i];
 		pPoll = &arPoll[i];
 
-		nr = pMio->socket.connect(pMio->netAddr);
+		nr = pMio->socket.connectAsync(pMio->netAddr);
 		switch( nr )  {
 			case EINPROGRESS:			/* Connecting */
 				log_trace(L_NET, "[mio(%i)] %s: connecting to %s in progress...\n",

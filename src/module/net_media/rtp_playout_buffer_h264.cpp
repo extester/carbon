@@ -747,7 +747,7 @@ CRtpPlayoutNode* CRtpPlayoutBufferH264::createNode(rtp_frame_t* pFrame, uint64_t
 
 void CRtpPlayoutBufferH264::setSps(void* pData, size_t size)
 {
-	size_t	rSize = MIN(size, sizeof(m_Sps));
+	size_t	rSize = sh_min(size, sizeof(m_Sps));
 
 	UNALIGNED_MEMCPY(m_Sps, pData, rSize);
 	m_nSps = rSize;
@@ -756,7 +756,7 @@ void CRtpPlayoutBufferH264::setSps(void* pData, size_t size)
 
 void CRtpPlayoutBufferH264::setPps(void* pData, size_t size)
 {
-	size_t	rSize = MIN(size, sizeof(m_Pps));
+	size_t	rSize = sh_min(size, sizeof(m_Pps));
 
 /*if ( size > 30 ) {
 	log_error(L_GEN, "[rtp_playout_h264(%s)] -----------!!!!!!!!!!!!!!!!!!!!!!!!!-----------\n", getName());

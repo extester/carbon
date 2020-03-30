@@ -541,7 +541,7 @@ result_t CMultiDns::resolve(dns_request_t* arDns, int count, hr_time_t hrTimeout
 
             pfd.events = POLLIN;
             pfd.revents = 0;
-            n = poll(&pfd, 1, MIN(msTimeout, nsec*1000));
+            n = poll(&pfd, 1, sh_min(msTimeout, nsec*1000));
 
             if ( n == 0 )  {
                 continue;

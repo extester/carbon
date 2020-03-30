@@ -60,7 +60,7 @@ void CShellExecuteApp::dumpEvent(CRemoteEvent* pEvent) const
     pEvent->dump();
 
     if ( strData != 0 && size > 0 )  {
-        size = MIN(size, 16536);
+        size = sh_min(size, 16536);
         strPayload.append(strData, size);
         log_dump("\t\t ool data:\n'%s'\n", (const char*)strPayload);
     }

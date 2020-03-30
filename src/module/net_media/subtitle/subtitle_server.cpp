@@ -46,7 +46,7 @@ CSubtitleServer::~CSubtitleServer()
  */
 void CSubtitleServer::generateFrame(void* p)
 {
-	UNUSED(p);
+	shell_unused(p);
 
 	formatFrame(m_timestampNext, hr_time_now(), m_pFrame);
 	m_pSink->processFrame(m_pFrame);

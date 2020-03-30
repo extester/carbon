@@ -22,6 +22,7 @@
 #ifndef __CARBON_MEMORY_H_INCLUDED__
 #define __CARBON_MEMORY_H_INCLUDED__
 
+#include "shell/config.h"
 #include "shell/shell.h"
 #include "shell/atomic.h"
 #include "shell/memory.h"
@@ -59,5 +60,31 @@ class CMemoryManager : public CModule
 	public:
 		virtual void dump(const char* strPref = "") const;
 };
+
+#if CARBON_MALLOC
+
+extern "C" {
+
+void* __libc_malloc(size_t nSize);
+void* __libc_calloc(size_t nNumb, size_t nSize);
+void* __libc_realloc(void* ptr, size_t nSize);
+void __libc_free(void* ptr);
+void* __libc_memalign(size_t nAlign, size_t nSize);
+
+void* malloc(size_t nSize);
+void* calloc(size_t nMemb, size_t nSize);
+void* realloc(void* ptr, size_t nSize) throw();
+void free(void* ptr) throw();
+
+void* memalign(size_t nAlign, size_t nSize) throw();
+int posix_memalign(void **ptr, size_t nAlign, size_t nSize) throw();
+void* aligned_alloc(size_t nAlign, size_t size) throw();
+
+void* valloc(size_t nSize) throw();
+void* pvalloc(size_t nSize) throw();
+
+};
+
+#endif /* CARBON_MALLOC */
 
 #endif /* __CARBON_MEMORY_H_INCLUDED__ */

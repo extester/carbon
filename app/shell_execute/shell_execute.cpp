@@ -153,14 +153,8 @@ static int xpclose(int fd, pid_t pid)
 
 class CShellExecuteServer : public CTcpServer
 {
-	private:
-		CString			m_strSocket;
-
 	public:
 		CShellExecuteServer() : CTcpServer("shell_execute") {
-			m_strSocket = REMOTE_EVENT_ROOT_PATH;
-			m_strSocket.appendPath(CARBON_SHELL_EXECUTE_RID);
-			setListenAddr(m_strSocket);
 		}
 
 		virtual ~CShellExecuteServer() {
@@ -183,20 +177,27 @@ class CShellExecuteServer : public CTcpServer
 
 result_t CShellExecuteServer::prepareSocket()
 {
+	CString		strSocket;
 	int 		n = 0;
 	result_t	nresult = ESUCCESS;
 
-	CFile::makeDir(REMOTE_EVENT_ROOT_PATH);
-	CFile::removeFile(m_strSocket);
+	strSocket = REMOTE_EVENT_ROOT_PATH;
+	strSocket.appendPath(CARBON_SHELL_EXECUTE_RID);
 
-	while ( CFile::fileExists(m_strSocket) && n < 10 )  {
+	CFile::makeDir(REMOTE_EVENT_ROOT_PATH);
+	CFile::removeFile(strSocket);
+
+	while ( CFile::fileExists(strSocket) && n < 10 )  {
 		sleep_ms(100);
 		n++;
 	}
 
-	if ( CFile::fileExists(m_strSocket) )  {
+	if ( !CFile::fileExists(strSocket) ) {
+		setAddr(strSocket);
+	}
+	else {
 		log_error(L_SHELL_EXECUTE, "[shell_execute] failed to prepare socket %s\n",
-				  m_strSocket.cs());
+				  strSocket.cs());
 		nresult = EEXIST;
 	}
 
@@ -236,7 +237,7 @@ result_t CShellExecuteServer::run()
 
 	nresult = prepareSocket();
 	if ( nresult == ESUCCESS )  {
-		log_trace(L_SHELL_EXECUTE, "[shell_execute] listening on %s...\n", m_strSocket.cs());
+		log_trace(L_SHELL_EXECUTE, "[shell_execute] listening on %s...\n", servAddrStr());
 		nresult = CTcpServer::run();
 	}
 
@@ -273,7 +274,7 @@ result_t CShellExecuteServer::executeEvent(CRemoteEvent* pEvent)
 	pData = pEvent->getData();
 	size = pEvent->getDataSize();
 	if ( pData != 0 && size > 0 )  {
-		strCmd.append(pData, MIN(size, SHELL_EXECUTE_CMD_MAX));
+		strCmd.append(pData, sh_min(size, SHELL_EXECUTE_CMD_MAX));
 
 		bResult = executeCmd(strCmd, &nrChild, &retVal, &strOutBuffer);
 	}
@@ -378,7 +379,7 @@ result_t CShellExecuteServer::doExecute(const char* strCmd, int* pRetVal,
 		size_t 		len;
 		result_t	nr;
 		siginfo_t 	info;
-		int			retVal;
+		int			retVal1;
 
 		len = (SHELL_EXECUTE_OUTPUT_MAX-1)-length;
 		nr = file.read(&strOutBuffer[length], &len, 0, HR_3SEC);
@@ -395,8 +396,8 @@ result_t CShellExecuteServer::doExecute(const char* strCmd, int* pRetVal,
 		//log_debug(L_GEN, "S='%s'\n", strOutBuffer);
 
 		_tbzero_object(info);
-		retVal = waitid(P_PID, pid, &info,  WEXITED|WNOHANG|WNOWAIT);
-		if ( retVal == 0 && info.si_pid == pid )  {
+		retVal1 = waitid(P_PID, pid, &info,  WEXITED|WNOHANG|WNOWAIT);
+		if ( retVal1 == 0 && info.si_pid == pid )  {
 			log_trace(L_SHELL_EXECUTE, "[shell_execute] client exitted\n");
 			break;
 		}
@@ -460,6 +461,7 @@ CShellExecuteServer*	g_pShellExecuteServer = 0;
 
 static void signalHandler(int sig)
 {
+	shell_unused(sig);
 	g_pShellExecuteServer->stop();
 }
 

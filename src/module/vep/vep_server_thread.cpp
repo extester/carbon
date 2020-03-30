@@ -20,7 +20,7 @@ CVepServerThread::CVepServerThread(const CNetAddr& netAddr) :
 	CVepServer(),
 	m_thServer("VepServerThread")
 {
-	setListenAddr(netAddr);
+	setAddr(netAddr);
 }
 
 CVepServerThread::~CVepServerThread()
@@ -32,8 +32,7 @@ void* CVepServerThread::thread(CThread* pThread, void* pData)
 {
 	pThread->bootCompleted(ESUCCESS);
 
-	log_debug(L_BOOT, "[vep_server] starting server thread, listen on %s\n",
-			  (const char*)m_listenAddr);
+	log_debug(L_BOOT, "[vep_server] starting server thread, listen on %s\n", servAddrStr());
 	run();
 	log_debug(L_BOOT, "[vep_server] server thread has been stopped\n");
 

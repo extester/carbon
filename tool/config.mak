@@ -31,7 +31,7 @@
 #   Option				Unix		Embed
 #   ---------------------------------------------------------------------
 #
-#   CARBON_JEMALLOC			e		-
+#   CARBON_MALLOC			e		-
 #   CARBON_UDNS				e		-
 #
 #   CARBON_OBJECT_NAME_LENGTH		48		16
@@ -66,7 +66,7 @@ TOOL_PATH :=$(CARBON_PATH)/tool
 
 ifeq ($(wildcard $(CARBON_PATH)/config.mak),)
 $(error No configuration file config.mak found)
-endif    
+endif
 
 include $(CARBON_PATH)/config.mak
 include $(TOOL_PATH)/config_$(CARBON_MACHINE).mak

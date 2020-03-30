@@ -43,7 +43,7 @@ CConfigItem* CConfigItem::getRoot()
 
 void CConfigItem::dumpIndent(int nIndent, char* strBuf, size_t maxLength) const
 {
-	int 	i, n = MIN(nIndent, (int)maxLength);
+	int 	i, n = sh_min(nIndent, (int)maxLength);
 
 	for(i=0; i<n; i++)  {
 		strBuf[i] = ' ';

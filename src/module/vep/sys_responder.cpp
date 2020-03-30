@@ -273,5 +273,5 @@ void CSysResponder::terminate()
 
 void CSysResponder::dump(const char* strPref) const
 {
-    UNUSED(strPref);
+    shell_unused(strPref);
 }

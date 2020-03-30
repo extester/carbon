@@ -161,7 +161,7 @@ result_t CVepPacket::putData(const void* pData, size_t nSize)
 	size_t				freeLen;
 	result_t			nresult = ESUCCESS;
 
-	shell_assert(pData);
+	shell_assert(pData || nSize == 0);
 	shell_assert(pHead->type != VEP_PACKET_TYPE_NULL);
 
 	if ( nSize < 1 )  {
@@ -241,7 +241,7 @@ boolean_t CVepPacket::isValid() const
 void CVepPacket::dumpData(const char* strPref) const
 {
 	int 	dataLen = (int)(m_nSize-sizeof(vep_packet_head_t));
-	int 	length = MIN(8, dataLen);
+	int 	length = sh_min(8, dataLen);
 
 	if ( length > 0 )  {
 		log_dump_bin(m_pPack+sizeof(vep_packet_head_t), length,

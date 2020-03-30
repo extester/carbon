@@ -16,24 +16,23 @@
  *
  *  Revision 1.2, 09.01.2018 10:26:57
  *  	Added 'interface' macro.
+ *
+ *  Revision 1.3, 30.03.2020 18:13:38
+ *  	Renamed MIN() => sh_min(), MAX() => sh_max(), ABS() => sh_abs(),
+ *  	BETWEEN() => sh_between(), UNUSED() => shell_unused()
  */
 
 #ifndef __SHELL_DEFINES_H_INCLUDED__
 #define __SHELL_DEFINES_H_INCLUDED__
 
 
-#ifndef MAX
-#define MAX(a,b)    					((a) > (b) ? (a) : (b))
-#endif /* MAX */
-#ifndef MIN
-#define MIN(a,b)    					((a) < (b) ? (a) : (b))
-#endif /* MIN */
+#define sh_max(a,b)    					((a) > (b) ? (a) : (b))
+#define sh_min(a,b)    					((a) < (b) ? (a) : (b))
+#define sh_abs(__n)						((__n) >= 0 ? (__n) : (-(__n)) )
+#define sh_between(__p, __min, __max)	((__p) >= (__min) && (__p) <= (__max))
 
-#define ABS(__n)						((__n) >= 0 ? (__n) : (-(__n)) )
+#define shell_unused(__expr)			((void)(__expr))
 
-#define UNUSED(__expr)					((void)(__expr))
-
-#define BETWEEN(__p, __min, __max)		((__p) >= (__min) && (__p) <= (__max))
 #define ARRAY_SIZE(__a)         		(sizeof(__a)/(sizeof((__a)[0])))
 #define MEMBER_SIZE(type, member) 		sizeof(((type *)0)->member)
 

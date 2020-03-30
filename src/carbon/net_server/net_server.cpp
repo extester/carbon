@@ -96,7 +96,7 @@ void* CNetServer::threadListen(CThread* pThread, void* pData)
     pThread->bootCompleted(ESUCCESS);
 
     log_debug2(L_BOOT, L_NETSERV, "[netserv] starting listen thread '%s' on %s\n",
-              pThread->getName(), (const char*)m_listenAddr);
+              pThread->getName(), servAddrStr());
     run();
     log_debug2(L_BOOT, L_NETSERV, "[netserv] listen thread '%s' has been stopped\n",
               pThread->getName());
@@ -260,11 +260,11 @@ result_t CNetServer::startListen(const CNetAddr& listenAddr)
 
 	shell_assert((CNetContainer*)m_pRecvTempl != 0);
 
-	getListenAddr(curListenAddr);
+	getAddr(curListenAddr);
 	if ( !m_listenThread.isRunning() || listenAddr != curListenAddr )  {
 		stopListen();
 
-		setListenAddr(listenAddr);
+		setAddr(listenAddr);
 		nresult = m_listenThread.start(THREAD_CALLBACK(CNetServer::threadListen, this));
 		if ( nresult != ESUCCESS )  {
 			log_error(L_NETSERV, "[netserv] failed to start listen thread, result %d\n", nresult);

@@ -72,7 +72,7 @@ void CProcUtils::parseCmdLine(const char* strLine, size_t nLength, proc_data_t* 
 
 		/* Get and join parameters */
 		copySubstring(pData->strParams, s, nLength, sizeof(pData->strParams));
-		l = MIN(nLength, sizeof(pData->strParams)-1);
+		l = sh_min(nLength, sizeof(pData->strParams)-1);
 
 		while ( (pp=(char*)_tmemchr(pData->strParams, '\0', l)) != 0 )  {
 			*pp = ' ';

@@ -572,7 +572,7 @@ void CRtcpClient::rrTimerHandler(void* p)
  *
  * Return: ESUCCESS, ...
  */
-result_t CRtcpClient::init(const CNetHost& serverHost, ip_port_t nRtcpPort,
+result_t CRtcpClient::init2(const CNetHost& serverHost, ip_port_t nRtcpPort,
 						   ip_port_t nRtcpServerPort, uint32_t nServerSsrc)
 {
 	CNetAddr	bindAddr;

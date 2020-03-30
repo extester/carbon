@@ -260,7 +260,7 @@ result_t CNetServerConnection::waitReceive()
 	nresult = ETIMEDOUT;
 	if ( (hrNextIterTime = getNextIterTime()) != HR_0 ) {
 		hrNow = hr_time_now();
-		hrTimeout = hrNextIterTime > hrNow ? MIN(hrNextIterTime-hrNow, HR_1MIN) : HR_0;
+		hrTimeout = hrNextIterTime > hrNow ? sh_min(hrNextIterTime-hrNow, HR_1MIN) : HR_0;
 
 		if ( hrTimeout > HR_0 ) {
 			m_bRecvBreak = TRUE;
@@ -332,7 +332,7 @@ void CNetServerConnection::runEventLoop()
 				hrDuration < HR_50MSEC )
 		{
 				hrDelay = IS_NETWORK_CONNECTION_CLOSED(nresult) ? HR_2MIN : HR_500MSEC;
-				hrNextIterTime = MIN(hrNextIterTime, hr_time_now()+hrDelay);
+				hrNextIterTime = sh_min(hrNextIterTime, hr_time_now()+hrDelay);
 
 				/*log_debug(L_NETSERV_FL, "[netserv_con] sleeping %d ms...\n",
 						  HR_TIME_TO_MILLISECONDS(hrNextIterTime-hr_time_now()));*/

@@ -72,7 +72,7 @@ typedef struct
 
 typedef struct
 {
-    vep_packet_type_t   h;
+	vep_packet_head_t   h;
     memory_stat_t       stat;
 } __attribute__ ((packed)) system_packet_memory_stat_reply_t;
 

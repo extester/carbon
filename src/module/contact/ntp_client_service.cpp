@@ -130,5 +130,5 @@ void CNtpClientService::terminate()
 
 void CNtpClientService::dump(const char* strPref) const
 {
-	UNUSED(strPref);
+	shell_unused(strPref);
 }

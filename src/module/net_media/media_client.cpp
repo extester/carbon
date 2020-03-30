@@ -51,7 +51,8 @@ CMediaClient::~CMediaClient()
 {
 	fsm_t	fsm = getFsmState();
 
-	shell_assert_ex(fsm == CLIENT_FSM_NONE, "fsm: %d ", fsm); UNUSED(fsm);
+	shell_assert_ex(fsm == CLIENT_FSM_NONE, "fsm: %d ", fsm);
+	shell_unused(fsm);
 
 	shell_assert_ex(m_arChannel.empty(), "[media_cli(%s)] where are %d channel(s) exist",
 						getName(), m_arChannel.size());
@@ -227,7 +228,7 @@ result_t CMediaClient::enableRtcp()
 		return EINVAL;
 	}
 
-	nresult = m_rtcp.init(m_serverAddr, nRtpPort+1, nRtpServerPort+1, ssrc);
+	nresult = m_rtcp.init2(m_serverAddr, nRtpPort+1, nRtpServerPort+1, ssrc);
 	if ( nresult != ESUCCESS )  {
 		log_error(L_NET_MEDIA, "[media_cli(%s)] failed to init RTCP, result %d\n",
 				  	getName(), nresult);
@@ -609,7 +610,8 @@ void CMediaClient::terminate()
 
 	log_trace(L_NET_MEDIA, "[media_cli(%s)] terminating (host %s)\n", getName(), m_selfHost.c_str());
 
-	shell_assert_ex(fsm == CLIENT_FSM_NONE, "state %d\n", fsm); UNUSED(fsm);
+	shell_assert_ex(fsm == CLIENT_FSM_NONE, "state %d\n", fsm);
+	shell_unused(fsm);
 
 	shell_assert(!m_pReceiverPool->isReceiving());
 	m_rtsp.terminate();

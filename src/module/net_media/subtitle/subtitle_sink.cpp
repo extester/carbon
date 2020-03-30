@@ -40,9 +40,9 @@ CSubtitleSinkS::~CSubtitleSinkS()
  */
 result_t CSubtitleSinkS::init(unsigned int nClockRate, uint16_t nWidth, uint16_t nHeight)
 {
-	UNUSED(nClockRate);
-	UNUSED(nWidth);
-	UNUSED(nHeight);
+	shell_unused(nClockRate);
+	shell_unused(nWidth);
+	shell_unused(nHeight);
 
 	counter_init(m_nFrames);
 

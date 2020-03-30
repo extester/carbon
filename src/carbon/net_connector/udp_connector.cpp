@@ -62,7 +62,7 @@ void CUdpConnector::notifyReceive(CNetContainer* pContainer, const CNetAddr& src
 
 void* CUdpConnector::workerThread(CThread* pThread, void* p)
 {
-	UNUSED(p);
+	shell_unused(p);
 	pThread->bootCompleted(ESUCCESS);
 
 	shell_assert(m_socket.isOpen());
