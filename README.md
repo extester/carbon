@@ -27,5 +27,5 @@ Framework contains a full set of example code and documentation (in russian so f
 
 #### License
 
-The Carbon Framework is licensed under apache 2.0 license.
+The Carbon Framework is licensed under the apache 2.0 license.
 
