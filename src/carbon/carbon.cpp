@@ -44,7 +44,7 @@ seqnum_t getUniqueId()
     seqnum_t		id;
 
     do {
-        id = (seqnum_t)atomic_inc(&uniqueId);
+        id = (seqnum_t)sh_atomic_inc(&uniqueId);
     } while ( id == NO_SEQNUM );
 
     return id;

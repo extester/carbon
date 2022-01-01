@@ -68,7 +68,8 @@ class CTimer : public CObject, public CListItem __CTimer_PARENT
         boolean_t isPeriodic() const { return (m_options&timerPeriodic) != 0; }
         hr_time_t getTime() const { return m_hrTime; }
 
-        virtual void restart() {
+        virtual void restart(hr_time_t hrNewPeriod = HR_0) {
+        	if ( hrNewPeriod != HR_0 )  { m_hrPeriod = hrNewPeriod; }
             m_hrTime = hr_time_now() + m_hrPeriod;
         }
 

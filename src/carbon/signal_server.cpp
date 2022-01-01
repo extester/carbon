@@ -51,7 +51,7 @@ CSignalServer::CSignalServer() :
 
 	if ( !g_pSignalServer ) {
 		m_threadId = pthread_self();
-		atomic_set(&m_bDone, FALSE);
+		sh_atomic_set(&m_bDone, FALSE);
 		m_bmpSignal = 0;
 
 		g_pSignalServer = this;
@@ -210,7 +210,7 @@ void CSignalServer::sendEvent(event_type_t event, NPARAM nparam) const
  */
 void CSignalServer::run()
 {
-	while ( atomic_get(&m_bDone) == FALSE ) {
+	while ( sh_atomic_get(&m_bDone) == FALSE ) {
 		sleep_s(10);
 
 		if ( m_bmpSignal != 0 ) {
@@ -248,7 +248,7 @@ void CSignalServer::run()
 void CSignalServer::stop()
 {
 	if ( g_pSignalServer ) {
-		atomic_set(&g_pSignalServer->m_bDone, TRUE);
+		sh_atomic_set(&g_pSignalServer->m_bDone, TRUE);
 	}
 
 	pthread_kill(m_threadId, SIGQUIT);

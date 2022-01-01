@@ -55,7 +55,7 @@ class CSocketAsync
 {
     protected:
 		int				m_hSocket;				/* Socket file descriptor */
-		int				m_exOption;
+		int				m_exOption;				/* Socket creation flags, see CSocket */
 
 	public:
 		explicit CSocketAsync(int exOption = 0) : m_hSocket(-1), m_exOption(exOption) {}

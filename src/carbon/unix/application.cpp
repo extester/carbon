@@ -32,15 +32,15 @@
  * CApplication class
  */
 
-CApplication::CApplication(const char* strName, version_t version, unsigned build,
+CApplication::CApplication(const char* strName, version_t version, unsigned int buildNumb,
 						   	int argc, char* argv[]) :
 	CModule(strName),
 	CEventLoopThread("MainLoop"),
 	CEventReceiver(this, strName),
 	m_appVersion(version),
-	m_appBuild(build),
+	m_appBuildNumb(buildNumb),
 	m_nExitCode(0),
-	m_hPickupAppender(LOGGER_APPENDER_NULL),
+	//m_hPickupAppender(LOGGER_APPENDER_NULL),
 	m_argc(argc),
 	m_argv(argv)
 {
@@ -74,6 +74,16 @@ CApplication::~CApplication()
 #endif /* CARBON_DEBUG_TRACK_OBJECT */
 
 	carbon_terminate();
+}
+
+const char* CApplication::getBuildDate() const
+{
+	static char		strDate[64] = "\0";
+
+	if ( strDate[0] == '\0' ) {
+		_tsnprintf(strDate, sizeof(strDate), "%s %s", __DATE__, __TIME__);
+	}
+	return strDate;
 }
 
 /*
@@ -136,12 +146,6 @@ void CApplication::initLogger()
 {
 	/* Tracing logs are disabled by default */
 	logger_disable(LT_TRACE|L_ALL);
-
-	logger_disable(LT_ALL|L_EV_TRACE_EVENT);
-	logger_disable(LT_ALL|L_EV_TRACE_TIMER);
-	logger_disable(LT_ALL|L_NETCONN_IO);
-	logger_disable(LT_ALL|L_NETSERV_IO);
-	logger_disable(LT_ALL|L_NETCLI_IO);
 }
 
 /*
@@ -149,7 +153,7 @@ void CApplication::initLogger()
  *
  * 		strFile		pickup appender filename
  */
-void CApplication::initLoggerPickupAppender(const char* strFile)
+/*void CApplication::initLoggerPickupAppender(const char* strFile)
 {
 	appender_handle_t	hAppender;
 
@@ -159,7 +163,7 @@ void CApplication::initLoggerPickupAppender(const char* strFile)
 	if ( hAppender != LOGGER_APPENDER_NULL )  {
 		m_hPickupAppender = hAppender;
 	}
-}
+}*/
 
 /*
  * Get the next available logger block of log strings
@@ -172,7 +176,7 @@ void CApplication::initLoggerPickupAppender(const char* strFile)
  * 		ESUCCESS	got a block of logs (MUST be confirmed by loggerBlockDone())
  * 		EBADF		pickup appender is not exists
  */
-result_t CApplication::getLoggerBlock(void* pBuffer, size_t* pSize)
+/*result_t CApplication::getLoggerBlock(void* pBuffer, size_t* pSize)
 {
 	result_t	nresult = EBADF;
 
@@ -181,7 +185,7 @@ result_t CApplication::getLoggerBlock(void* pBuffer, size_t* pSize)
 	}
 
 	return nresult;
-}
+}*/
 
 /*
  * Confirm that a last logger block has been successfully processed
@@ -189,10 +193,10 @@ result_t CApplication::getLoggerBlock(void* pBuffer, size_t* pSize)
  *
  * 		size		size of block, bytes
  */
-void CApplication::loggerBlockDone(size_t size)
+/*void CApplication::loggerBlockDone(size_t size)
 {
 
-}
+}*/
 
 void CApplication::parseAppPath(const char* strArgv0)
 {
@@ -258,7 +262,7 @@ void CApplication::terminate()
 {
 	deleteEventAll();
 //	logger_terminate();
-	m_hPickupAppender = LOGGER_APPENDER_NULL;
+	//m_hPickupAppender = LOGGER_APPENDER_NULL;
 }
 
 
@@ -267,11 +271,13 @@ void CApplication::terminate()
  */
 int CApplication::run()
 {
+	char		strVersion[32];
 	result_t	nresult;
 
-	log_info(L_GEN, "~~~ Starting %s, version %d.%d ~~~\n",
-			 CModule::getName(), VERSION_MAJOR(m_appVersion), VERSION_MINOR(m_appVersion));
-	log_info(L_GEN, "~~~ Build %u, %s, %s ~~~\n", m_appBuild, __DATE__, __TIME__);
+	formatVersion(m_appVersion, strVersion, sizeof(strVersion));
+
+	log_info(L_GEN, "~~~ Starting %s, version %s ~~~\n", CModule::getName(), strVersion);
+	log_info(L_GEN, "~~~ Build %u, %s ~~~\n", m_appBuildNumb, getBuildDate());
 
 	setExitCode(0);
 

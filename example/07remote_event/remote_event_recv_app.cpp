@@ -33,7 +33,7 @@ static const char* eventStringTable[] =
  *      argv        command line argument 'argv'
  */
 CRemoteEventRecvApp::CRemoteEventRecvApp(int argc, char* argv[]) :
-    CApplication("Remote Event Receiver Application", MAKE_VERSION(1,0), 1, argc, argv),
+    CApplication("Remote Event Receiver Application", MAKE_VERSION(1,0,0), 1, argc, argv),
 	m_nEventCount(0)
 {
 }

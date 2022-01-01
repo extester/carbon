@@ -53,7 +53,7 @@ endif
 
 DEFINES += -D$(_MACHINE_DEF)=1
 
-CFLAGS += -Wall -Werror -Wno-error=array-bounds 
+CFLAGS += -Wall -Werror -Wno-error=array-bounds -Wno-format-truncation
 CFLAGS_unix += -pthread
 CFLAFS_embed +=
 
@@ -108,7 +108,11 @@ _LIBS += -lz
 endif
 
 ifeq ($(CARBON_DB),1)
-_LIBS += -lsqlite3
+#_LIBS += -lsqlite3
+endif
+
+ifeq ($(CARBON_DATE),1)
+_LIBS += -ldate
 endif
 
 %.o: %.cpp $(DEPS) Makefile

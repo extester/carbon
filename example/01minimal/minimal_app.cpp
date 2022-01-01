@@ -21,7 +21,7 @@
  *      argv        command line argument 'argv'
  */
 CMinimalApp::CMinimalApp(int argc, char* argv[]) :
-    CApplication("Minimal Application", MAKE_VERSION(1,0), 1, argc, argv)
+    CApplication("Minimal Application", MAKE_VERSION(1,0,0), 1, argc, argv)
 {
 }
 

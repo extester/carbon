@@ -13,6 +13,6 @@
 
 DIRS := 00empty 01minimal 02event 03timer 04thread 05module \
 	06net_server 07remote_event 08shell_execute 09net_sync \
-	10net_server_sync 11udp_server     13dns_client
+	10net_server_sync 11udp_server 13dns_client 14ssl_socket
 
 include ../tool/multidir.mak

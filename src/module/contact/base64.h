@@ -54,8 +54,10 @@ class CBase64
 		signed char*			m_pBuffer;		/* Result buffer */
 		size_t					m_size;			/* Result data size, bytes */
 
+		int						m_nCharsPerLine;
+
 	public:
-		CBase64() : m_pBuffer(NULL), m_size(0)
+		CBase64() : m_pBuffer(NULL), m_size(0), m_nCharsPerLine(72)
 		{
 		}
 
@@ -78,6 +80,10 @@ class CBase64
 		const uint8_t* getData() const { return (const uint8_t*)m_pBuffer; }
 		size_t getSize() const { return m_size; }
 		void reset();
+
+		void setCharsPerLine(int nCharsPerLine) {
+			m_nCharsPerLine = nCharsPerLine;
+		}
 
 	private:
 		void allocBuffer(size_t size);

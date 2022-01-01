@@ -27,7 +27,7 @@ CThreadPoolItem::CThreadPoolItem(CThreadPool* pParent, const char* strName) :
 	CEventReceiver(this, strName),
 	m_pParent(pParent)
 {
-	atomic_set(&m_busy, 0);
+	sh_atomic_set(&m_busy, 0);
 }
 
 CThreadPoolItem::~CThreadPoolItem()

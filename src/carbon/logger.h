@@ -53,6 +53,10 @@
 #define L_NET_ROUTE					(L_SHELL_USER+18)
 #define L_DNS_CLIENT				(L_SHELL_USER+19)
 
-#define L_USER						(L_DNS_CLIENT+1)
+#define L_MAIL						(L_SHELL_USER+20)
+
+#define L_SQL						(L_SHELL_USER+21)
+
+#define L_CARBON_USER				(L_SQL+1)
 
 #endif /* __CARBON_LOGGER_H_INCLUDED__ */

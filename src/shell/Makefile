@@ -51,23 +51,25 @@ endif
 ################################################################################
 
 OBJ_unix = \
-	breaker.o file.o socket.o netaddr.o \
+	breaker.o file.o socket.o ssl_socket.o netaddr.o \
 	net/netutils.o \
  	\
-	logger/logger_base.o logger/appender_stdout.o \
+	logger/logger.o logger/appender_stdout.o \
 	logger/appender_syslog.o logger/appender_file.o \
 	logger/appender_tcp_server.o logger/appender_pickup.o \
 	\
  	unix/assert.o unix/debug.o unix/thread.o unix/utils.o	
 
 HEADER_unix = \
-	breaker.h file.h memory.h socket.h netaddr.h \
-	net/netutils.h \
+	breaker.h file.h memory.h socket.h ssl_socket.h netaddr.h \
+	net/netutils.h openssl.h \
 	\
 	unix/hr_time.h unix/lock.h unix/logger.h \
 	unix/thread.h \
 	\
-	logger/logger_base.h logger/appender_file.h
+	logger/logger_compat.h logger/logger.h logger/appender.h \
+	logger/appender_file.h logger/appender_pickup.h logger/appender_stdout.h \
+	logger/appender_syslog.h logger/appender_tcp_server.h
 
 ################################################################################
 # EMBED sources

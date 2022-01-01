@@ -28,12 +28,12 @@ class CStateMachine
     public:
         CStateMachine(fsm_t state = FSM_UNDEFINED)
         {
-        	atomic_set(&m_state, state);
+        	sh_atomic_set(&m_state, state);
         }
         virtual ~CStateMachine() {}
 
-        void setFsmState(fsm_t state)  { atomic_set(&m_state, state); }
-        fsm_t getFsmState() const { return (fsm_t)atomic_get(&m_state); }
+        void setFsmState(fsm_t state)  { sh_atomic_set(&m_state, state); }
+        fsm_t getFsmState() const { return (fsm_t)sh_atomic_get(&m_state); }
 };
 
 #endif /* __CARBON_FSM_H_INCLUDED__ */

@@ -35,7 +35,7 @@ class CTcpServer : public CObject
 
 	public:
 		virtual result_t run();
-		virtual void stop() { atomic_inc(&m_nStop); }
+		virtual void stop() { sh_atomic_inc(&m_nStop); }
 
 	public:
 		boolean_t isAddrLocal() const {
@@ -68,7 +68,7 @@ class CTcpServer : public CObject
 
 	protected:
 		virtual boolean_t isStopping() const {
-			return atomic_get(&m_nStop) != 0;
+			return sh_atomic_get(&m_nStop) != 0;
 		}
 
 		virtual result_t processClient(CSocketRef* pSocket) = 0;

@@ -24,7 +24,7 @@
  *      argv        command line argument 'argv'
  */
 CUdpServerApp::CUdpServerApp(int argc, char* argv[]) :
-    CApplication("UDP Net Server Application", MAKE_VERSION(1,0), 1, argc, argv),
+    CApplication("UDP Net Server Application", MAKE_VERSION(1,0,0), 1, argc, argv),
     m_netConnector(new CRawContainer(1024), this)
 {
 }
@@ -87,9 +87,6 @@ boolean_t CUdpServerApp::processEvent(CEvent* pEvent)
 void CUdpServerApp::initLogger()
 {
 	CApplication::initLogger();
-
-	//logger_enable(LT_ALL|L_NETCONN_IO);
-	//logger_enable(LT_ALL|L_NETCONN_FL);
 }
 
 /*

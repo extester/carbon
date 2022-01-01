@@ -97,6 +97,8 @@ class CNetHost
 
 		boolean_t setHost(const char* strHost);
 
+		const char* getHost() { return CNetHost::cs(); }
+
 		virtual const char* cs() const {
 			if ( isValid() ) {
 				strHost_r(m_strBuf, sizeof(m_strBuf));
@@ -157,6 +159,8 @@ class CNetAddr : public CNetHost
 		operator ip_port_t() const {
 			return ntohs(m_port);
 		}
+
+		uint16_t getPort() const { return ntohs(m_port); }
 
 		void setAddr(ip_addr_t nIpAddr, ip_port_t nPort) {
 			m_ip = nIpAddr; m_port = htons(nPort); m_bValid = TRUE;

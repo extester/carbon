@@ -28,7 +28,7 @@ extern size_t strSplit(const char* strData, char chSep, str_vector_t* strAr, con
 extern boolean_t strParseSemicolonKeyValue(const char* strData, const char* strKey,
 										   CString& strValue, const char* strTrim = 0);
 
-typedef struct {
+struct split_url_t {
 	CString			scheme;     	/* mandatory */
 	CString			host;			/* mandatory */
 	int				port;       	/* optional */
@@ -37,7 +37,10 @@ typedef struct {
 	CString			fragment;		/* optional */
 	CString			username;		/* optional */
 	CString			password;		/* optional */
-} split_url_t;
+
+	split_url_t() : port(0) {}
+	~split_url_t() = default;
+};
 
 extern boolean_t splitUrl(const char* strUrl, split_url_t* pData);
 

@@ -180,13 +180,13 @@ void CThread::stop()
         if ( m_hrStopTimeout )  {
             int     i, retVal;
             int     ms = (int)HR_TIME_TO_MILLISECONDS(m_hrStopTimeout);
-            int     ms100 = ms < 100 ? 1 : (ms/100);
+            int     ms3 = ms < 3 ? 3 : (ms/3);
 
             retVal = pthread_kill(m_id, SIGQUIT);
 
-            for(i=0; i<ms100 && retVal == 0; i++)  {
+            for(i=0; i<ms3 && retVal == 0; i++)  {
             	retVal = pthread_kill(m_id, SIGQUIT);
-                usleep(100000);
+                usleep(3000);
             }
 
             if ( retVal != 0 )  {

@@ -10,6 +10,10 @@
  *
  *  Revision 1.0, 25.08.2015 17:28:25
  *      Initial revision.
+ *
+ *  Revision 2.0, 02.02.2021 14:02:32
+ *  	Fixed terminate(),
+ *  	user two extra signals: SIGTSTP, SIGTTIN for thread termination
  */
 /*
  * Note: appender is available if LOGGER_SINGLE_THREAD is disabled
@@ -22,7 +26,6 @@
  */
 
 #include <stdio.h>
-#include <pthread.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <poll.h>
@@ -30,69 +33,22 @@
 #include <fcntl.h>
 #include <signal.h>
 
-#include "shell/shell.h"
+#include "shell/tstring.h"
+#include "shell/unaligned.h"
 #include "shell/hr_time.h"
-#include "shell/logger.h"
-#include "shell/logger/logger_base.h"
+#include "shell/logger/logger.h"
+#include "shell/logger/appender_tcp_server.h"
 
 #if !LOGGER_SINGLE_THREAD
 
 #define TCP_SERVER_ITEM_MAX				4
-#define LOGGER_TCP_BUFFER_MAX			(LOGGER_BUFFER_MAX*4)
 #define TCP_SERVER_SENT_TIMEOUT			HR_1SEC
 
-typedef struct {
-	int			hSocket;
-	char		strBuffer[LOGGER_TCP_BUFFER_MAX];
-	size_t		sent, count;
-} tcp_server_item_t;
-
-
-class CAppenderTcpServer : public CAppender
-{
-	private:
-		std::vector<tcp_server_item_t>	m_arItem;		/* Connected client list */
-		pthread_t						m_thAccept;		/* Accepting new connection thread */
-		pthread_t						m_thAppend;		/* Worker thread */
-		pthread_mutex_t					m_lock;			/* Appender lock */
-		pthread_cond_t 					m_cond;
-		boolean_t						m_bTerminating;	/* TRUE: appender is terminating */
-		uint16_t						m_nPort;		/* Port to listen on */
-
-	public:
-		CAppenderTcpServer(uint16_t nPort);
-		virtual ~CAppenderTcpServer();
-
-	public:
-		virtual result_t init();
-		virtual void terminate();
-		virtual result_t append(const void* pData, size_t nLength);
-
-	private:
-		void addItem(int hSocket);
-		void deleteItem(tcp_server_item_t* pItem);
-		result_t doSend(tcp_server_item_t* pItem);
-
-		void lock() { pthread_mutex_lock(&m_lock); }
-		void unlock() { pthread_mutex_unlock(&m_lock); }
-		void setupSignals();
-
-		static void* acceptThreadST(void* p) {
-			return static_cast<CAppenderTcpServer*>(p)->acceptThread();
-		}
-		void* acceptThread();
-
-		static void* appendThreadST(void* p) {
-			return static_cast<CAppenderTcpServer*>(p)->appendThread();
-		}
-		void* appendThread();
-};
-
-CAppenderTcpServer::CAppenderTcpServer(uint16_t nPort) :
+CAppenderTcpServer::CAppenderTcpServer(unsigned int nPort) :
 	CAppender(),
 	m_thAccept(0),
 	m_thAppend(0),
-	m_bTerminating(FALSE),
+	m_bTerminating(false),
 	m_nPort(nPort)
 {
 	pthread_condattr_t	cond_attr;
@@ -101,7 +57,7 @@ CAppenderTcpServer::CAppenderTcpServer(uint16_t nPort) :
 	m_arItem.reserve(TCP_SERVER_ITEM_MAX);
 	retVal = pthread_mutex_init(&m_lock, NULL);
 	if ( retVal != 0 ) {
-		logger_syslog_impl("[AppenderTcpServer] mutex initialisation failed, result %d\n", errno);
+		CLogger::syslog("[AppenderTcpServer] mutex initialisation failed, result %d\n", errno);
 	}
 
 	pthread_condattr_init(&cond_attr);
@@ -109,7 +65,7 @@ CAppenderTcpServer::CAppenderTcpServer(uint16_t nPort) :
 
 	retVal = pthread_cond_init(&m_cond, &cond_attr);
 	if ( retVal != 0 ) {
-		logger_syslog_impl("[AppenderTcpServer] cond initialisation failed, result %d\n", errno);
+		CLogger::syslog("[AppenderTcpServer] cond initialisation failed, result %d\n", errno);
 	}
 
 	pthread_condattr_destroy(&cond_attr);
@@ -143,7 +99,7 @@ void CAppenderTcpServer::addItem(int hSocket)
 		unlock();
 		::close(hSocket);
 
-		logger_syslog_impl("[AppenderTcpServer] too many clients\n");
+		CLogger::syslog("[AppenderTcpServer] too many clients\n");
 	}
 }
 
@@ -169,7 +125,6 @@ void CAppenderTcpServer::deleteItem(tcp_server_item_t* pItem)
 
 	unlock();
 }
-
 
 /*
  * Send a single string to the all appender's items
@@ -213,9 +168,9 @@ result_t CAppenderTcpServer::append(const void* pData, size_t nLength)
 
 	unlock();
 
-	//if ( dropCount > 0 )  {
-	//	logger_syslog_impl("[AppenderTcpServer] dropped message of the %d item(s)\n", dropCount);
-	//}
+	if ( dropCount > 0 )  {
+		CLogger::syslog("[AppenderTcpServer] dropped message of the %d item(s)\n", dropCount);
+	}
 
 	return dropCount == 0 ? ESUCCESS : EBUSY;
 }
@@ -305,7 +260,7 @@ result_t CAppenderTcpServer::doSend(tcp_server_item_t* pItem)
 	return nresult;
 }
 
-void CAppenderTcpServer::setupSignals()
+void CAppenderTcpServer::setupSignals(int unblockSig)
 {
 	sigset_t        sigset;
 
@@ -315,12 +270,37 @@ void CAppenderTcpServer::setupSignals()
 	sigfillset(&sigset);
 	sigdelset(&sigset, SIGQUIT);
 	sigdelset(&sigset, SIGBUS);
+	sigdelset(&sigset, unblockSig);
 	sigdelset(&sigset, SIGFPE);
 	sigdelset(&sigset, SIGILL);
 	sigdelset(&sigset, SIGSEGV);
 	pthread_sigmask(SIG_BLOCK, &sigset, NULL);
 }
 
+static void userHandler(int signum)
+{
+	(void)signum;
+	//printf("\n*INTR*\n"); fflush(stdout);
+}
+
+result_t CAppenderTcpServer::setHandler(int signum, void (*handler)(int))
+{
+	struct sigaction	sa;
+	result_t			nresult = ESUCCESS;
+
+	_tbzero_object(sa);
+	sa.sa_handler = handler;
+	sa.sa_flags = 0;
+	sigemptyset(&sa.sa_mask);
+
+	if ( sigaction(signum, &sa, NULL) == -1 )  {
+		nresult = errno;
+		CLogger::syslog("[AppenderTcpServer]failed to setup signal handler %d, result: %d\n",
+						signum, nresult);
+	}
+
+	return nresult;
+}
 
 /*
  * Appender worker thread
@@ -331,13 +311,14 @@ void* CAppenderTcpServer::appendThread()
 	boolean_t 	bRestart;
 	result_t	nresult;
 
-	setupSignals();
+	setupSignals(SIGTTIN);
+	setHandler(SIGTTIN, userHandler);
 
 	while ( !m_bTerminating )  {
 		lock();
 
 		do {
-			bRestart = FALSE;
+			bRestart = false;
 			n = 0;
 			count = m_arItem.size();
 
@@ -347,8 +328,8 @@ void* CAppenderTcpServer::appendThread()
 					if ( nresult != ESUCCESS )  {
 						unlock();
 						deleteItem(&m_arItem[i]);
-						logger_syslog_impl("[AppenderTcpServer] sent failure, result %d, client dropped\n", nresult);
-						bRestart = TRUE;
+						CLogger::syslog("[AppenderTcpServer] sent failure, result %d, client dropped\n", nresult);
+						bRestart = true;
 						lock();
 						break;
 					}
@@ -365,7 +346,7 @@ void* CAppenderTcpServer::appendThread()
 		unlock();
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 /*
@@ -376,18 +357,20 @@ void* CAppenderTcpServer::acceptThread()
 	struct sockaddr_in 	sin;
 	int					hSocket, retVal, n;
 
-	setupSignals();
+	setupSignals(SIGTSTP);
+	setHandler(SIGTSTP, userHandler);
+
 
 	hSocket = ::socket(AF_INET, SOCK_STREAM, 0);
 	if ( hSocket < 0 )  {
-		logger_syslog_impl("[AppenderTcpServer] failed to create listen socket, result %d\n", errno);
-		return 0;
+		CLogger::syslog("[AppenderTcpServer] failed to create listen socket, result %d\n", errno);
+		return nullptr;
 	}
 
 	n = 1;
-	retVal = setsockopt(hSocket, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n));
+	retVal = ::setsockopt(hSocket, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n));
 	if ( retVal < 0 )  {
-		logger_syslog_impl("[AppenderTcpServer] failed to set REUSEADDR to the listen socket, result %d\n", errno);
+		CLogger::syslog("[AppenderTcpServer] failed to set REUSEADDR to the listen socket, result %d\n", errno);
 	}
 
 	_tbzero(&sin, sizeof(sin));
@@ -397,14 +380,14 @@ void* CAppenderTcpServer::acceptThread()
 
 	retVal = ::bind(hSocket, (struct sockaddr*)&sin, sizeof(sin));
 	if ( retVal < 0 )  {
-		logger_syslog_impl("[AppenderTcpServer] failed to bind listen socket, result %d\n", errno);
-		close(hSocket);
-		return NULL;
+		CLogger::syslog("[AppenderTcpServer] failed to bind listen socket, result %d\n", errno);
+		::close(hSocket);
+		return nullptr;
 	}
 
 	retVal = ::listen(hSocket, TCP_SERVER_ITEM_MAX);
 	if ( retVal < 0 )  {
-		logger_syslog_impl("[AppenderTcpServer] failed to listen for listen socket, result %d\n", errno);
+		CLogger::syslog("[AppenderTcpServer] failed to listen for listen socket, result %d\n", errno);
 	}
 
 	while ( !m_bTerminating )  {
@@ -425,24 +408,24 @@ void* CAppenderTcpServer::acceptThread()
 					addItem(hNewSocket);
 				}
 				else {
-					logger_syslog_impl("[AppenderTcpServer] failed to set socket flags, result=%d\n", errno);
-					close(hNewSocket);
+					CLogger::syslog("[AppenderTcpServer] failed to set socket flags, result=%d\n", errno);
+					::close(hNewSocket);
 				}
 			}
 			else {
-				logger_syslog_impl("[AppenderTcpServer] failed to get socket fd flags, result=%d\n", errno);
-				close(hNewSocket);
+				CLogger::syslog("[AppenderTcpServer] failed to get socket fd flags, result=%d\n", errno);
+				::close(hNewSocket);
 			}
 		}
 		else {
 			if ( errno != EINTR && !m_bTerminating )  {
-				sleep(2);
+				hr_sleep(HR_2SEC);
 			}
 		}
 	}
 
-	close(hSocket);
-	return NULL;
+	::close(hSocket);
+	return nullptr;
 }
 
 /*
@@ -463,13 +446,13 @@ result_t CAppenderTcpServer::init()
 	retVal = pthread_create(&m_thAccept, &attr, acceptThreadST, this);
 	if ( retVal != 0 ) {
 		nresult = errno;
-		logger_syslog_impl("[AppenderTcpServer] failed to start accept thread, result %d\n", nresult);
+		CLogger::syslog("[AppenderTcpServer] failed to start accept thread, result %d\n", nresult);
 	}
 
 	retVal = pthread_create(&m_thAppend, &attr, appendThreadST, this);
 	if ( retVal != 0 )  {
 		nresult_join(nresult, errno);
-		logger_syslog_impl("[AppenderTcpServer] failed to start append thread, result %d\n", errno);
+		CLogger::syslog("[AppenderTcpServer] failed to start append thread, result %d\n", errno);
 	}
 
 	pthread_attr_destroy(&attr);
@@ -484,18 +467,18 @@ void CAppenderTcpServer::terminate()
 {
 	size_t	i, count;
 
-	m_bTerminating = TRUE;
+	m_bTerminating = true;
 	pthread_cond_broadcast(&m_cond);
 
 	if ( m_thAccept )  {
-		pthread_kill(m_thAccept, SIGQUIT);
-		pthread_join(m_thAccept, NULL);
+		pthread_kill(m_thAccept, SIGTSTP);
+		pthread_join(m_thAccept, nullptr);
 		m_thAccept = 0;
 	}
 
 	if ( m_thAppend )  {
-		pthread_kill(m_thAppend, SIGQUIT);
-		pthread_join(m_thAppend, NULL);
+		pthread_kill(m_thAppend, SIGTTIN);
+		pthread_join(m_thAppend, nullptr);
 		m_thAppend = 0;
 	}
 
@@ -504,28 +487,6 @@ void CAppenderTcpServer::terminate()
 		::close(m_arItem[i].hSocket);
 	}
 	m_arItem.clear();
-}
-
-/*
- * Add TCPSERVER appender to the existing logger
- *
- *		nPort			listening TCP port
- *
- * Return: appender handle or LOGGER_APPENDER_NULL
- */
-appender_handle_t logger_addTcpServerAppender(uint16_t nPort)
-{
-	CAppenderTcpServer*	pAppender;
-	appender_handle_t	hAppender;
-
-	pAppender = new CAppenderTcpServer(nPort);
-	hAppender = logger_insert_appender_impl(pAppender);
-	if ( hAppender == LOGGER_APPENDER_NULL )  {
-		/* Failed */
-		delete pAppender;
-	}
-
-	return hAppender;
 }
 
 #endif /* !LOGGER_SINGLE_THREAD */

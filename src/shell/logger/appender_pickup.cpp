@@ -26,72 +26,30 @@
  *
  */
 
-#include <unistd.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <malloc.h>
-#if !LOGGER_SINGLE_THREAD
-#include <pthread.h>
-#endif /* !LOGGER_SINGLE_THREAD */
+//#include <unistd.h>
+//#include <sys/stat.h>
+//#include <fcntl.h>
+//#include <malloc.h>
 
-#include "shell/shell.h"
-#include "shell/logger.h"
-#include "shell/logger/appender_file.h"
-
-#define PICKUP_APPENDER_MAX_SIZE			(1024*1024*200)		/* 200M */
-#define PICKUP_APPENDER_DROP_SIZE			(1024*1024*50)		/* 50M */
+#include "shell/defines.h"
+#include "shell/tstdio.h"
+#include "shell/logger/appender_pickup.h"
 
 
-class CAppenderPickup : public CAppenderFile
+CAppenderPickup::CAppenderPickup(const char* strFilename) :
+		CAppenderFile(strFilename, 1, PICKUP_APPENDER_MAX_SIZE)
 {
-	private:
-		size_t				m_szLastBlock;
 #if !LOGGER_SINGLE_THREAD
-		pthread_mutex_t		m_lock;			/* Appender lock */
+	pthread_mutex_init(&m_lock, NULL);
 #endif /* !LOGGER_SINGLE_THREAD */
+}
 
-	public:
-		CAppenderPickup(const char* strFilename) :
-			CAppenderFile(strFilename, 1, PICKUP_APPENDER_MAX_SIZE)
-		{
+CAppenderPickup::~CAppenderPickup()
+{
 #if !LOGGER_SINGLE_THREAD
-			pthread_mutex_init(&m_lock, NULL);
+	pthread_mutex_destroy(&m_lock);
 #endif /* !LOGGER_SINGLE_THREAD */
-		}
-
-		virtual ~CAppenderPickup()
-		{
-#if !LOGGER_SINGLE_THREAD
-			pthread_mutex_destroy(&m_lock);
-#endif /* !LOGGER_SINGLE_THREAD */
-		}
-
-	public:
-		virtual result_t init();
-		virtual void terminate();
-		virtual result_t append(const void* pData, size_t nLength);
-
-		result_t getBlock(void* pBuffer, size_t* pSize);
-		void getBlockConfirm(size_t size);
-		void getBlockUndo(size_t size);
-
-	private:
-		void lock() {
-#if !LOGGER_SINGLE_THREAD
-			pthread_mutex_lock(&m_lock);
-#endif /* !LOGGER_SINGLE_THREAD */
-		}
-
-		void unlock() {
-#if !LOGGER_SINGLE_THREAD
-			pthread_mutex_unlock(&m_lock);
-#endif /* !LOGGER_SINGLE_THREAD */
-		}
-
-		result_t readBlock(void* pBuffer, size_t* pSize);
-		result_t dropBlock(size_t size);
-};
-
+}
 
 /*
  * Initialise an appender
@@ -129,7 +87,7 @@ result_t CAppenderPickup::append(const void* pData, size_t nLength)
 
 	lock();
 
-	nresult = logger_append_file(m_strFilename, pData, nLength);
+	nresult = CLogger::appendFile(m_strFilename, pData, nLength);
 	if ( nresult != ESUCCESS ) {
 		unlock();
 		return nresult;
@@ -188,7 +146,7 @@ result_t CAppenderPickup::readBlock(void* pBuffer, size_t* pSize)
 			}
 			else {
 				nresult = errno;
-				logger_syslog_impl("PICKUP APPENDER ERROR: failed to read file %s, result: %d\n",
+				CLogger::syslog("PICKUP APPENDER ERROR: failed to read file %s, result: %d\n",
 								   m_strFilename, nresult);
 			}
 		}
@@ -197,8 +155,8 @@ result_t CAppenderPickup::readBlock(void* pBuffer, size_t* pSize)
 	}
 	else {
 		nresult = errno;
-		logger_syslog_impl("PICKUP APPENDER ERROR: failed to open %s, result: %d\n",
-				m_strFilename, nresult);
+		CLogger::syslog("PICKUP APPENDER ERROR: failed to open %s, result: %d\n",
+								m_strFilename, nresult);
 	}
 
 	return nresult;
@@ -209,11 +167,11 @@ result_t CAppenderPickup::readBlock(void* pBuffer, size_t* pSize)
 /*
  * Cut logger file
  *
- * 		size		bytes to cut from the beginning
+ * 		nLength		bytes to cut from the beginning
  *
  * Return: ESUCCESS, ...
  */
-result_t CAppenderPickup::dropBlock(size_t size)
+result_t CAppenderPickup::dropBlock(size_t nLength)
 {
 	int			retVal, srcHandle, tmpHandle;
 	void*		tmpBuffer;
@@ -222,13 +180,13 @@ result_t CAppenderPickup::dropBlock(size_t size)
 	ssize_t		count, wcount;
 	result_t	nresult;
 
-	if ( size == 0 )  {
+	if ( nLength == 0 )  {
 		return ESUCCESS;
 	}
 
 	tmpBuffer = ::malloc(FILE_BLOCK_SIZE);
 	if ( !tmpBuffer )  {
-		logger_syslog_impl("PICKUP APPENDER ERROR: failed to allocate memory\n");
+		CLogger::syslog("PICKUP APPENDER ERROR: failed to allocate memory\n");
 		return ENOMEM;
 	}
 
@@ -236,29 +194,30 @@ result_t CAppenderPickup::dropBlock(size_t size)
 	tmpHandle = ::open(strTempFile, O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR);
 	if ( tmpHandle <= 0 )  {
 		nresult = errno;
-		logger_syslog_impl("PICKUP APPENDER ERROR: failed to create file %s, result: %d\n",
-						   strTempFile, nresult);
-		free(tmpBuffer);
+		CLogger::syslog("PICKUP APPENDER ERROR: failed to create file %s, result: %d\n",
+							   strTempFile, nresult);
+		::free(tmpBuffer);
 		return nresult;
 	}
 
 	srcHandle = ::open(m_strFilename, O_RDONLY);
 	if ( srcHandle < 0 )  {
 		nresult = errno;
-		logger_syslog_impl("PICKUP APPENDER ERROR: failed to open file %s, result: %d\n",
-						   m_strFilename, nresult);
+		CLogger::syslog("PICKUP APPENDER ERROR: failed to open file %s, result: %d\n",
+						   		m_strFilename, nresult);
 		::close(tmpHandle);
-		free(tmpBuffer);
+		::free(tmpBuffer);
 		return nresult;
 	}
 
-	offset = lseek(srcHandle, size, SEEK_SET);
+	offset = ::lseek(srcHandle, nLength, SEEK_SET);
 	if ( offset == (off_t)-1 )  {
 		nresult = errno;
-		logger_syslog_impl("PICKUP APPENDER ERROR: seek failed, result: %d\n", nresult);
+		CLogger::syslog("PICKUP APPENDER ERROR: seek failed, result: %d\n", nresult);
+
 		::close(tmpHandle);
 		::close(srcHandle);
-		free(tmpBuffer);
+		::free(tmpBuffer);
 		return nresult;
 	}
 
@@ -269,7 +228,7 @@ result_t CAppenderPickup::dropBlock(size_t size)
 			wcount = ::write(tmpHandle, tmpBuffer, (size_t)count);
 			if ( wcount != count )  {
 				nresult = EIO;
-				logger_syslog_impl("PICKUP APPENDER ERROR: write failed, result: %d\n", nresult);
+				CLogger::syslog("PICKUP APPENDER ERROR: write failed, result: %d\n", nresult);
 			}
 		}
 		else
@@ -278,19 +237,19 @@ result_t CAppenderPickup::dropBlock(size_t size)
 		}
 		else {
 			nresult = errno;
-			logger_syslog_impl("PICKUP APPENDER ERROR: read failed, result: %d\n", nresult);
+			CLogger::syslog("PICKUP APPENDER ERROR: read failed, result: %d\n", nresult);
 		}
 	}
 
 	::close(tmpHandle);
 	::close(srcHandle);
-	free(tmpBuffer);
+	::free(tmpBuffer);
 
 	if ( nresult == ESUCCESS )  {
 		retVal = ::rename(strTempFile, m_strFilename);
 		if ( retVal != 0 )  {
 			nresult = errno;
-			logger_syslog_impl("PICKUP APPENDER ERROR: failed to rename '%s' => '%s', result: %d\n",
+			CLogger::syslog("PICKUP APPENDER ERROR: failed to rename '%s' => '%s', result: %d\n",
 							   strTempFile, m_strFilename, nresult);
 		}
 	}
@@ -336,13 +295,13 @@ result_t CAppenderPickup::getBlock(void* pBuffer, size_t* pSize)
 /*
  * Cut logger file
  *
- * 		size		cut bytes from the beginning
+ * 		nLength		cut bytes from the beginning
  */
-void CAppenderPickup::getBlockConfirm(size_t size)
+void CAppenderPickup::getBlockConfirm(size_t nLength)
 {
 	lock();
 	if ( m_szLastBlock > 0 )  {
-		dropBlock(sh_min(m_szLastBlock, size));
+		dropBlock(sh_min(m_szLastBlock, nLength));
 		m_szLastBlock = 0;
 	}
 	unlock();
@@ -351,38 +310,15 @@ void CAppenderPickup::getBlockConfirm(size_t size)
 /*
  * Undo previous getBlock() call
  *
- * 		size		block size, bytes
+ * 		nLength		block size, bytes
  */
-void CAppenderPickup::getBlockUndo(size_t size)
+void CAppenderPickup::getBlockUndo(size_t nLength)
 {
+	shell_unused(nLength);
+
 	lock();
 	m_szLastBlock = 0;
 	unlock();
-}
-
-
-/*
- * Add PICKUP appender to the existing logger
- *
- *		strFilename			full filename
- *		nFileCountMax		maximum files to store
- *		nFileSizMax			maximum a log file size, bytes
- *
- * Return: appender handle or LOGGER_APPENDER_NULL
- */
-appender_handle_t logger_addPickupAppender(const char* strFilename)
-{
-	CAppenderPickup*	pAppender;
-	appender_handle_t	hAppender;
-
-	pAppender = new CAppenderPickup(strFilename);
-	hAppender = logger_insert_appender_impl(pAppender);
-	if ( hAppender == LOGGER_APPENDER_NULL )  {
-		/* Failed */
-		delete pAppender;
-	}
-
-	return hAppender;
 }
 
 /*
@@ -395,7 +331,7 @@ appender_handle_t logger_addPickupAppender(const char* strFilename)
  *
  * Return: ESUCCESS, ...
  */
-result_t logger_getPickupAppenderBlock(appender_handle_t hAppender,
+/*result_t logger_getPickupAppenderBlock(appender_handle_t hAppender,
 									   void* pBuffer, size_t* pSize)
 {
 	CAppenderPickup*	pAppender;
@@ -407,7 +343,7 @@ result_t logger_getPickupAppenderBlock(appender_handle_t hAppender,
 	}
 
 	return nresult;
-}
+}*/
 
 /*
  * Remove previously read block from the logger
@@ -415,7 +351,7 @@ result_t logger_getPickupAppenderBlock(appender_handle_t hAppender,
  *		hAppender		appender handle
  *		size			block size
  */
-void logger_getPickupAppenderBlockConfirm(appender_handle_t hAppender, size_t size)
+/*void logger_getPickupAppenderBlockConfirm(appender_handle_t hAppender, size_t size)
 {
 	CAppenderPickup*	pAppender;
 
@@ -423,7 +359,7 @@ void logger_getPickupAppenderBlockConfirm(appender_handle_t hAppender, size_t si
 	if ( pAppender )  {
 		pAppender->getBlockConfirm(size);
 	}
-}
+}*/
 
 /*
  * Undo logger_getPickupAppenderBlock() call
@@ -431,7 +367,7 @@ void logger_getPickupAppenderBlockConfirm(appender_handle_t hAppender, size_t si
  *		hAppender		appender handle
  *		size			block size
  */
-void logger_getPickupAppenderBlockUndo(appender_handle_t hAppender, size_t size)
+/*void logger_getPickupAppenderBlockUndo(appender_handle_t hAppender, size_t size)
 {
 	CAppenderPickup*	pAppender;
 
@@ -439,4 +375,4 @@ void logger_getPickupAppenderBlockUndo(appender_handle_t hAppender, size_t size)
 	if ( pAppender )  {
 		pAppender->getBlockUndo(size);
 	}
-}
+}*/

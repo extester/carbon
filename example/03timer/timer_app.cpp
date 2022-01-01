@@ -26,7 +26,7 @@
  *      argv        command line argument 'argv'
  */
 CTimerApp::CTimerApp(int argc, char* argv[]) :
-    CApplication("Timer Application", MAKE_VERSION(1,0), 1, argc, argv),
+    CApplication("Timer Application", MAKE_VERSION(1,0,0), 1, argc, argv),
     m_pReceiver(0),
     m_pTimer(0)
 {

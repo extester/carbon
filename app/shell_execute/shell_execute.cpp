@@ -17,6 +17,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 
+#include "shell/logger.h"
 #include "shell/file.h"
 
 #include "carbon/carbon.h"
@@ -457,7 +458,7 @@ result_t CShellExecuteServer::doExecute(const char* strCmd, int* pRetVal,
 
 /*******************************************************************************/
 
-CShellExecuteServer*	g_pShellExecuteServer = 0;
+CShellExecuteServer*	g_pShellExecuteServer = nullptr;
 
 static void signalHandler(int sig)
 {
@@ -469,14 +470,12 @@ int main(int argc, char* argv[])
 {
 	result_t	nresult;
 
+	shell_unused(argc);
+	shell_unused(argv);
+
 	carbon_init();
 
-	logger_set_format(LT_DEBUG, "%T [%l] %P(%N): (%p) %s");
-	logger_set_format(LT_ERROR, "%T [%l] %P(%N): (%p) %s");
-	logger_set_format(LT_INFO, "%T [%l] %P(%N): (%p) %s");
-	logger_set_format(LT_TRACE, "%T [%l] %P(%N): (%p) %s");
-
-	//logger_disable(LT_DEBUG|L_SHELL_EXECUTE);
+	g_logger.setFormat(LT_ALL, "%T [%l] %P(%N): (%p) %s");
 	logger_disable(LT_TRACE|L_SHELL_EXECUTE);
 
 	signal(SIGINT, signalHandler);
@@ -494,5 +493,5 @@ int main(int argc, char* argv[])
 
 	carbon_terminate();
 
-	return nresult == ESUCCESS ? 0 : 1;
+	return nresult == ESUCCESS ? EXIT_SUCCESS : EXIT_FAILURE;
 }

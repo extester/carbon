@@ -20,6 +20,6 @@
 
 #include "shell/shell.h"
 
-#define CARBON_LIBRARY_VERSION      		MAKE_VERSION(0, 2)
+#define CARBON_LIBRARY_VERSION      		MAKE_VERSION(0, 0, 3)
 
 #endif /* __CARBON_VERSION_H_INCLUDED__ */

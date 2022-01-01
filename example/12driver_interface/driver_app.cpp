@@ -22,7 +22,7 @@
  *      argv        command line argument 'argv'
  */
 CDriverApp::CDriverApp(int argc, char* argv[]) :
-    CApplication("Driver Application", MAKE_VERSION(1,0), 1, argc, argv),
+    CApplication("Driver Application", MAKE_VERSION(1,0,0), 1, argc, argv),
 	m_pDriver(0)
 {
 }

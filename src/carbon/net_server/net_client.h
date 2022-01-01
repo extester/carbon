@@ -136,6 +136,7 @@
 #define __CARBON_NET_CLIENT_H_INCLUDED__
 
 #include "shell/socket.h"
+#include "shell/ssl_socket.h"
 
 #include "carbon/cstring.h"
 #include "carbon/net_container.h"
@@ -286,17 +287,17 @@ class CNetClient : public CModule, public CEventLoopThread, public CEventReceive
         CEventReceiver*     m_pParent;          /* Parent module */
         netclient_stat_t    m_stat;             /* Module statistic */
 
-        CSocket             m_socket;			/* Socket */
+        CSocket*			m_pSocket;			/* Socket, CSocket/CSslSocket */
 
 		mutable CMutex		m_lock;				/* Shared variable access synchonisation */
 		CNetAddr			m_bindAddr;			/* Socket bind address or NETADDR_NULL */
-		CString				m_strBindAddr;		/* Sockey bind address or "" (for UNIX sokckets) */
+		CString				m_strBindAddr;		/* Socket bind address or "" (for UNIX sokckets) */
 		hr_time_t			m_hrConnectTimeout;	/* Connect timeout */
 		hr_time_t           m_hrSendTimeout;    /* Send timeout */
 		hr_time_t           m_hrRecvTimeout;    /* Recv timeout */
 
     public:
-        CNetClient(CEventReceiver* pParent);
+        CNetClient(CEventReceiver* pParent, boolean_t bSsl = false);
         virtual ~CNetClient();
 
     public:
@@ -333,7 +334,7 @@ class CNetClient : public CModule, public CEventLoopThread, public CEventReceive
 
 		virtual void disconnect(seqnum_t nSessId = NO_SEQNUM);
 		virtual result_t disconnectSync();
-		virtual boolean_t isConnected() const { return m_socket.isOpen(); }
+		virtual boolean_t isConnected() const { return m_pSocket->isOpen(); }
 
 		virtual void send(CNetContainer* pContainer, seqnum_t sessId);
 		virtual result_t sendSync(CNetContainer* pContainer);

@@ -33,7 +33,7 @@ static const char* eventStringTable[] =
  *      argv        command line argument 'argv'
  */
 CRemoteEventSendApp::CRemoteEventSendApp(int argc, char* argv[]) :
-    CApplication("Remote Event Sender Application", MAKE_VERSION(1,0), 1, argc, argv),
+    CApplication("Remote Event Sender Application", MAKE_VERSION(1,0,0), 1, argc, argv),
 	m_sessId(0)
 {
 }

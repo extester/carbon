@@ -15,8 +15,8 @@
 #ifndef __SHELL_LOGGER_APPENDER_FILE_H_INCLUDED__
 #define __SHELL_LOGGER_APPENDER_FILE_H_INCLUDED__
 
-#include "shell/logger.h"
-#include "shell/logger/logger_base.h"
+#include "shell/logger/appender.h"
+#include "shell/logger/logger.h"
 
 #define APPENDER_FILENAME_MAX		256
 
@@ -35,19 +35,18 @@ class CAppenderFile : public CAppender
 			m_nFileSizeMax(nFileSizeMax),
 			m_nSize(0)
 		{
-			logger_copy_string_impl(m_strFilename, strFilename, sizeof(m_strFilename));
+			CLogger::copyString(m_strFilename, strFilename, sizeof(m_strFilename));
 		}
 
-		virtual ~CAppenderFile() {
-		}
+		virtual ~CAppenderFile() noexcept = default;
+
+	protected:
+		void makeFilename(char* strFilename, int index) const;
 
 	public:
 		virtual result_t init();
 		virtual void terminate();
 		virtual result_t append(const void* pData, size_t nLength);
-
-	protected:
-		void makeFilename(char* strFilename, int index);
 };
 
 #endif /* __SHELL_LOGGER_APPENDER_FILE_H_INCLUDED__ */

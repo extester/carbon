@@ -25,11 +25,15 @@ typedef struct {
 } shell_execute_t;
 
 extern result_t shellExecute(const char* strCmd, CEventReceiver* pReplyReceiver,
-							 seqnum_t nSessId);
+						seqnum_t nSessId);
 extern result_t shellExecuteSync(const char* strCmd, CEventReceiver* pReplyReceiver,
-								 hr_time_t hrTimeout, shell_execute_t* pOutData);
+						hr_time_t hrTimeout, shell_execute_t* pOutData);
 
 extern result_t shellExecuteStartServer(const char* strExecPath);
 extern result_t shellExecuteStopServer();
+
+extern result_t shellExecuteStartServer(const char* strExecPath,
+						hr_time_t hrStartTime, hr_time_t hrKillTime);
+extern result_t shellExecuteStopServer(hr_time_t hrKillTime);
 
 #endif /* __CARBON_SHELL_EXECUTE_CLIENT_H_INCLUDED__ */

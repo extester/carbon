@@ -91,7 +91,7 @@ void CEventLoop::insertTimer(CTimer* pTimer)
 
     locker.unlock();
 
-    if ( logger_is_enabled(LT_DEBUG|L_EV_TRACE_TIMER) )  {
+    if ( logger_is_enabled(LT_TRACE|L_TIMER) )  {
     	hr_time_t	hrTime1;
     	hr_time_t	hrNow = hr_time_now();
     	char		buffer[64];
@@ -110,8 +110,9 @@ void CEventLoop::insertTimer(CTimer* pTimer)
  * Restart timer
  *
  *      pTimer     		timer object
+ *      hrNewPeriod		set new timer period if != HR_0
  */
-void CEventLoop::restartTimer(CTimer* pTimer)
+void CEventLoop::restartTimer(CTimer* pTimer, hr_time_t hrNewPeriod)
 {
     CAutoLock   locker(m_cond);
 	CTimer*		pCurTimer;
@@ -120,7 +121,7 @@ void CEventLoop::restartTimer(CTimer* pTimer)
     while ( pCurTimer != 0 )  {
         if ( pCurTimer == pTimer )  {
             m_timerList.remove(pTimer);
-            pTimer->restart();
+            pTimer->restart(hrNewPeriod);
             locker.unlock();
             insertTimer(pTimer);
             break;
@@ -248,14 +249,14 @@ void CEventLoop::processTimers()
 
     while ( !m_bDone && (pTimer=getClosestTimer(hrNow)) != 0 )  {
         if ( !pTimer->isPeriodic() )  {
-            if ( logger_is_enabled(LT_DEBUG|L_EV_TRACE_TIMER) )  {
+            if ( logger_is_enabled(LT_TRACE|L_TIMER) )  {
             	log_dump("---> TM  exec: %s\n", pTimer->getName());
             }
             pTimer->execute();
             delete pTimer;
         }
         else  {
-            if ( logger_is_enabled(LT_DEBUG|L_EV_TRACE_TIMER) )  {
+            if ( logger_is_enabled(LT_TRACE|L_TIMER) )  {
             	log_dump("---> TM  exec: %s\n", pTimer->getName());
             }
             pTimer->restart();
@@ -294,7 +295,7 @@ void CEventLoop::sendEvent(CEvent* pEvent)
         m_eventList.insert(pEvent);
         locker.unlock();
 
-        if ( logger_is_enabled(LT_DEBUG|L_EV_TRACE_EVENT) )  {
+        if ( logger_is_enabled(LT_TRACE|L_EVENT) )  {
         	char			buffer[64];
         	CEventReceiver*	pReceiver = pEvent->getReceiver();
 

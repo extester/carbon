@@ -60,7 +60,7 @@ enum {
  *      argv        command line argument 'argv'
  */
 CCameraApp::CCameraApp(int argc, char* argv[]) :
-    CApplication("IP Camera Test", MAKE_VERSION(1,0), 1, argc, argv),
+    CApplication("IP Camera Test", MAKE_VERSION(1,0,0), 1, argc, argv),
 	CStateMachine(CAMERA_FSM_NONE),
 	IMediaClient(),
 	m_pMediaClient(0),

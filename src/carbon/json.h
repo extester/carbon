@@ -77,13 +77,13 @@ class CJsonItem __CJsonItem_PARENT
 	protected:
 		CString					m_strName;			/* Item name (optional) */
 		json_item_type_t		m_type;				/* Item type, JSON_ITEM_xxx */
-		CJsonItem*				m_pParent;			/* Parent Item, 0 - root item */
+		CJsonItem*				m_pParent;			/* Parent Item, nullptr - root item */
 
 	protected:
 		CJsonItem(const char* strName, json_item_type_t type) :
 			m_strName(strName),
 			m_type(type),
-			m_pParent(0)
+			m_pParent(nullptr)
 		{
 		}
 
@@ -105,7 +105,7 @@ class CJsonItem __CJsonItem_PARENT
 		const char* getName() const { return m_strName; }
 		CJsonItem* getParent() const { return m_pParent; }
 
-		boolean_t isRoot() const { return getParent() == 0; }
+		boolean_t isRoot() const { return getParent() == nullptr; }
 		CJsonItem* getRoot();
 
 		virtual void dump(const char* strPref = "") const = 0;
@@ -662,6 +662,17 @@ class CJsonObject : public CJsonOA
 			else { nresult = pItem ? EINVAL : ENOENT; }
 			return nresult;
 		}
+
+		result_t getBoolean(const char* strName, boolean_t& bValue) const {
+			CJsonItem*		pItem = find(strName);
+			CJsonBoolean*	pJsonBoolean = dynamic_cast<CJsonBoolean*>(pItem);
+			result_t		nresult = ESUCCESS;
+
+			if ( pJsonBoolean )  { bValue = *pJsonBoolean; }
+			else { nresult = pItem ? EINVAL : ENOENT; }
+			return nresult;
+		}
+
 
 		CJsonObject* getObject(const char* strName) const {
 			return dynamic_cast<CJsonObject*>(find(strName));

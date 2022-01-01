@@ -16,7 +16,6 @@
 #include "shell/file.h"
 
 #include "carbon/utils.h"
-#include "carbon/net_container.h"
 #include "carbon/event/remote_event_service.h"
 
 #define MODULE_NAME			"remote_event_service"
@@ -26,10 +25,16 @@
  * Class CRemoteEventService
  */
 
+/*
+ * Service constructor
+ *
+ * 		strSelfRid		service remote Id string
+ * 		pParent			parent module
+ */
 CRemoteEventService::CRemoteEventService(const char* strSelfRid, CEventReceiver* pParent) :
 	CModule(MODULE_NAME),
 	m_pParent(pParent),
-	m_pNetConnector(0),
+	m_pNetConnector(nullptr),
 	m_strSelfRid(strSelfRid)
 {
 	dec_ptr<CRemoteEvent>	pEvent = new CRemoteEvent;
@@ -65,7 +70,7 @@ result_t CRemoteEventService::preparePath()
 	}
 
 	if ( CFile::fileExists(m_strSocket) )  {
-		log_error(L_GEN, "[remote_event_service] failed to prepare socket %s\n",
+		log_error(L_GEN, "[remote_service] failed to prepare socket %s\n",
 				  m_strSocket.cs());
 		nresult = EEXIST;
 	}
@@ -111,7 +116,7 @@ boolean_t CRemoteEventService::processEvent(CEvent* pEvent)
 					appSendEvent(pRemoteEvent);
 				}
 				else {
-					log_debug(L_GEN, "[remote_event_service] received a packet with unsupported "
+					log_debug(L_GEN, "[remote_service] received a packet with unsupported "
 							  "container type, dropped\n");
 				}
 			}
@@ -124,10 +129,15 @@ boolean_t CRemoteEventService::processEvent(CEvent* pEvent)
 }
 */
 
+/*
+ * Initialise remote event service
+ *
+ * Return: ESUCCESS, ...
+ */
 result_t CRemoteEventService::init()
 {
 	dec_ptr<CRemoteEvent>	pEvent = new CRemoteEvent;
-	result_t	nresult;
+	result_t				nresult;
 
 	nresult = preparePath();
 	if ( nresult != ESUCCESS )  {
@@ -154,6 +164,9 @@ result_t CRemoteEventService::init()
 	return nresult;
 }
 
+/*
+ * Stop remote event service
+ */
 void CRemoteEventService::terminate()
 {
 	m_pNetConnector->terminate();
@@ -176,34 +189,46 @@ void CRemoteEventService::dump(const char* strPref) const
 
 /*******************************************************************************/
 
-CRemoteEventService* g_pRemoteEventService = 0;
+CRemoteEventService* g_pRemoteEventService = nullptr;
 
+/*
+ * Create and initialise remote event service
+ *
+ * 		ridSelf			service remote Id
+ * 		pParent			parent object
+ *
+ * Return: ESUCCESS, ...
+ */
 result_t initRemoteEventService(const char* ridSelf, CEventReceiver* pParent)
 {
 	result_t	nresult = ESUCCESS;
 
-	if ( g_pRemoteEventService == 0 ) {
-		log_info(L_BOOT, "[service] initialising Remote Event Service\n");
+	if ( g_pRemoteEventService == nullptr ) {
+		log_info(L_BOOT, "[remote_service] initialising Remote Event Service\n");
 
 		g_pRemoteEventService = new CRemoteEventService(ridSelf, pParent);
 		nresult = g_pRemoteEventService->init();
 		if ( nresult != ESUCCESS )  {
-			log_error(L_GEN, "[service] failed to init Remote Event Service, result: %d\n",
+			log_error(L_GEN, "[remote_service] failed to init Remote Event Service, result: %d\n",
 					  	nresult);
 			delete g_pRemoteEventService;
-			g_pRemoteEventService = 0;
+			g_pRemoteEventService = nullptr;
 		}
 	}
 
 	return nresult;
 }
 
+/*
+ * Stop and delete remote event service
+ */
 void exitRemoteEventService()
 {
-	if ( g_pRemoteEventService ) {
-		log_info(L_BOOT, "[service] terminating Remote Event Service\n");
+	if ( g_pRemoteEventService != nullptr ) {
+		log_info(L_BOOT, "[remote_service] terminating Remote Event Service\n");
+
 		g_pRemoteEventService->terminate();
 		delete g_pRemoteEventService;
-		g_pRemoteEventService = 0;
+		g_pRemoteEventService = nullptr;
 	}
 }

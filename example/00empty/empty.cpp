@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     CApplication*   pApp;
     int	            nOsExitCode;
 
-    pApp = new CApplication("Empty App", MAKE_VERSION(0,1), 1, argc, argv);
+    pApp = new CApplication("Empty App", MAKE_VERSION(0,0,1), 1, argc, argv);
 	nOsExitCode = pApp->run();
     delete pApp;
 

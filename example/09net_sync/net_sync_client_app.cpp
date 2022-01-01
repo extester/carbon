@@ -25,7 +25,7 @@
  *      argv        command line argument 'argv'
  */
 CNetSyncClientApp::CNetSyncClientApp(int argc, char* argv[]) :
-    CApplication("Net Sync Client Application", MAKE_VERSION(1,0), 1, argc, argv),
+    CApplication("Net Sync Client Application", MAKE_VERSION(1,0,0), 1, argc, argv),
     m_netConnector(new CVepContainer, this),
 	m_pTimer(0)
 {

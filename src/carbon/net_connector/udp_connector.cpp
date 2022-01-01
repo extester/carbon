@@ -67,7 +67,7 @@ void* CUdpConnector::workerThread(CThread* pThread, void* p)
 
 	shell_assert(m_socket.isOpen());
 
-	while ( atomic_get(&m_bDone) == 0 )  {
+	while ( sh_atomic_get(&m_bDone) == 0 )  {
 		dec_ptr<CNetContainer>	pContainer;
 		CNetAddr				srcAddr;
 		result_t				nresult;
@@ -76,11 +76,11 @@ void* CUdpConnector::workerThread(CThread* pThread, void* p)
 			pContainer = m_pRecvTempl->clone();
 			nresult = pContainer->receive(m_socket, UDP_CONNECTOR_RECV_TIMEOUT, &srcAddr);
 			if ( nresult == ESUCCESS )  {
-				if ( logger_is_enabled(LT_DEBUG|L_NETCONN_IO) )  {
+				if ( logger_is_enabled(LT_TRACE|L_NETCONN_IO) )  {
 					char    strTmp[128];
 
 					pContainer->getDump(strTmp, sizeof(strTmp));
-					log_debug(L_NETCONN_IO, "[udpconn] >>> Recv container (from %s): %s\n",
+					log_trace(L_NETCONN_IO, "[udpconn] >>> Recv container (from %s): %s\n",
 							  srcAddr.cs(), strTmp);
 				}
 				else {
@@ -92,7 +92,7 @@ void* CUdpConnector::workerThread(CThread* pThread, void* p)
 			}
 			else {
 				statFail();
-				if ( atomic_get(&m_bDone) == 0 && nresult != ECANCELED && nresult != ETIMEDOUT ) {
+				if ( sh_atomic_get(&m_bDone) == 0 && nresult != ECANCELED && nresult != ETIMEDOUT ) {
 					log_error(L_GEN, "[udpconn] failed to receive container, result %d\n", nresult);
 					sleep_s(1);
 				}
@@ -132,11 +132,11 @@ result_t CUdpConnector::sendSync(CNetContainer* pContainer, const CNetAddr& dstA
 	if ( nresult == ESUCCESS )  {
 		nresult = pContainer->send(socket, m_hrSendTimeout, dstAddr);
 		if ( nresult == ESUCCESS ) {
-			if ( logger_is_enabled(LT_DEBUG|L_NETCONN_IO) )  {
+			if ( logger_is_enabled(LT_TRACE|L_NETCONN_IO) )  {
 				char    strTmp[128];
 
 				pContainer->getDump(strTmp, sizeof(strTmp));
-				log_debug(L_NETCONN_IO, "[udpconn] <<< Sent container (to %s): %s\n",
+				log_trace(L_NETCONN_IO, "[udpconn] <<< Sent container (to %s): %s\n",
 						  dstAddr.cs(), strTmp);
 			}
 			else {
@@ -205,7 +205,7 @@ result_t CUdpConnector::startListen(const CNetAddr& listenAddr)
  */
 void CUdpConnector::stopListen()
 {
-	atomic_inc(&m_bDone);
+	sh_atomic_inc(&m_bDone);
 	m_socket.breakerBreak();
 	m_thread.stop();
 	m_socket.close();
@@ -222,14 +222,14 @@ result_t CUdpConnector::init()
 		return nresult;
 	}
 
-	atomic_set(&m_bDone, 0);
+	sh_atomic_set(&m_bDone, 0);
 
 	return nresult;
 }
 
 void CUdpConnector::terminate()
 {
-	atomic_inc(&m_bDone);
+	sh_atomic_inc(&m_bDone);
 	stopListen();
 	CModule::terminate();
 }

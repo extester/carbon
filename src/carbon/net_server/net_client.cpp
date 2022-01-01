@@ -177,7 +177,7 @@ result_t CNetClientSyncRecv::processSyncEvent()
  * CNetClient Module
  */
 
-CNetClient::CNetClient(CEventReceiver* pParent) :
+CNetClient::CNetClient(CEventReceiver* pParent, boolean_t bSsl) :
     CModule(MODULE_NAME),
     CEventLoopThread(MODULE_NAME),
     CEventReceiver(this, MODULE_NAME),
@@ -188,11 +188,13 @@ CNetClient::CNetClient(CEventReceiver* pParent) :
     m_hrRecvTimeout(NET_CLIENT_RECV_TIMEOUT)
 {
     shell_assert(pParent);
+	m_pSocket = bSsl ? new CSslSocket(true) : new CSocket;
 }
 
 CNetClient::~CNetClient()
 {
-    shell_assert(!m_socket.isOpen());
+	shell_assert(!m_pSocket->isOpen());
+	SAFE_DELETE(m_pSocket);
     //shell_assert(!CEventLoopThread::isRunning());
 }
 
@@ -220,13 +222,13 @@ void CNetClient::doConnect(const CNetAddr& netAddr, seqnum_t sessId, socket_type
     CNetAddr        bindAddr = m_bindAddr;
 
     locker.unlock();
-    shell_assert(!m_socket.isOpen());
-    m_socket.close();
+    shell_assert(!m_pSocket->isOpen());
+    m_pSocket->close();
 
 	log_trace(L_NETCLI, "[netcli(%d)] connecting to %s\n", sessId, netAddr.cs());
 
 	if ( netAddr.isValid() )  {
-	    nresult = m_socket.connect(netAddr, hrTimeout, bindAddr, sockType);
+	    nresult = m_pSocket->connect(netAddr, hrTimeout, bindAddr, sockType);
 		if ( nresult == ESUCCESS )  {
 			log_trace(L_NETCLI, "[netcli(%d)] connected to %s\n", sessId, netAddr.cs());
 			statConnect();
@@ -243,7 +245,7 @@ void CNetClient::doConnect(const CNetAddr& netAddr, seqnum_t sessId, socket_type
 	}
 
     pEvent = new CEvent(EV_NET_CLIENT_CONNECTED, m_pParent, 0, (NPARAM)nresult,
-						"net_client_connected");
+								"net_client_connected");
     pEvent->setSessId(sessId);
 
     appSendEvent(pEvent);
@@ -258,13 +260,13 @@ void CNetClient::doConnect(const char* strSocket, seqnum_t sessId, socket_type_t
 	CString			strBindAddr = m_strBindAddr;
 
 	locker.unlock();
-	shell_assert(!m_socket.isOpen());
-	m_socket.close();
+	shell_assert(!m_pSocket->isOpen());
+	m_pSocket->close();
 
 	log_trace(L_NETCLI, "[netcli(%d)] connecting to %s\n", sessId, strSocket);
 
-	nresult = m_socket.connect(strSocket, hrTimeout,
-							   	strBindAddr.isEmpty() ? NULL : strBindAddr, sockType);
+	nresult = m_pSocket->connect(strSocket, hrTimeout,
+					strBindAddr.isEmpty() ? NULL : strBindAddr, sockType);
 	if ( nresult == ESUCCESS )  {
 		log_trace(L_NETCLI, "[netcli(%d)] connected to %s\n", sessId, strSocket);
 		statConnect();
@@ -290,7 +292,7 @@ void CNetClient::doDisconnect(seqnum_t sessId)
 	log_trace(L_NETCLI, "[netcli] disconnecting\n");
 
     //shell_assert(m_socket.isOpen());
-    m_socket.close();
+    m_pSocket->close();
 
 	if ( sessId != NO_SEQNUM )  {
 		CEvent*		pEvent;
@@ -319,17 +321,17 @@ void CNetClient::doSend(CNetContainer* pContainer, seqnum_t sessId)
     locker.unlock();
     shell_assert(pContainer);
 
-    if ( m_socket.isOpen() ) {
+    if ( m_pSocket->isOpen() ) {
 		log_trace(L_NETCLI, "[netcli(%d)] sending a container...\n", sessId);
-        nresult = pContainer->send(m_socket, hrTimeout);
+        nresult = pContainer->send(*m_pSocket, hrTimeout);
         if ( nresult == ESUCCESS ) {
 			statSend();
 
-			if ( logger_is_enabled(LT_DEBUG|L_NETCLI_IO) )  {
+			if ( logger_is_enabled(LT_TRACE|L_NETCLI_IO) )  {
 				char    strTmp[128];
 
 				pContainer->getDump(strTmp, sizeof(strTmp));
-				log_debug(L_NETCLI_IO, "[netcli] <<< Sent container: %s\n", strTmp);
+				log_trace(L_NETCLI_IO, "[netcli] <<< Sent container: %s\n", strTmp);
 			}
 			else {
 				log_trace(L_NETCLI, "[netcli(%d)] container sent.\n", sessId);
@@ -351,7 +353,7 @@ void CNetClient::doSend(CNetContainer* pContainer, seqnum_t sessId)
         CEvent*         pEvent;
 
         pEvent = new CEvent(EV_NET_CLIENT_SENT, m_pParent, (PPARAM)0,
-                            (NPARAM)nresult, "net_client_sent");
+   							(NPARAM)nresult, "net_client_sent");
         pEvent->setSessId(sessId);
         appSendEvent(pEvent);
     }
@@ -376,18 +378,18 @@ void CNetClient::doRecv(CNetContainer* pContainer, seqnum_t sessId)
 	shell_assert(sessId != NO_SEQNUM);
 
     locker.unlock();
-    if ( m_socket.isOpen() )  {
+    if ( m_pSocket->isOpen() )  {
 		log_trace(L_NETCLI, "[netcli(%d)] receiving a container...\n", sessId);
 
-        nresult = pContainer->receive(m_socket, hrTimeout);
+        nresult = pContainer->receive(*m_pSocket, hrTimeout);
 		if ( nresult == ESUCCESS ) {
 			statRecv();
 
-			if ( logger_is_enabled(LT_DEBUG|L_NETCLI_IO) )  {
+			if ( logger_is_enabled(LT_TRACE|L_NETCLI_IO) )  {
 				char    strTmp[128];
 
 				pContainer->getDump(strTmp, sizeof(strTmp));
-				log_debug(L_NETCLI_IO, "[netcli] >>> Recv container: %s\n", strTmp);
+				log_trace(L_NETCLI_IO, "[netcli] >>> Recv container: %s\n", strTmp);
 			}
 			else {
 				log_trace(L_NETCLI, "[netcli(%d)] container received.\n", sessId);
@@ -434,35 +436,35 @@ void CNetClient::doIo(CNetContainer* pContainer, seqnum_t sessId)
 	//shell_assert(sessId != NO_SEQNUM);
 
 	locker.unlock();
-    if ( m_socket.isOpen() )  {
+    if ( m_pSocket->isOpen() )  {
         result_t    nresult;
 
 		log_trace(L_NETCLI, "[netcli(%d)] executing I/O...\n", sessId);
 
-        nresult = pContainer->send(m_socket, hrSendTimeout);
+        nresult = pContainer->send(*m_pSocket, hrSendTimeout);
         if ( nresult == ESUCCESS )  {
 			statSend();
 
-			if ( logger_is_enabled(LT_DEBUG|L_NETCLI_IO) )  {
+			if ( logger_is_enabled(LT_TRACE|L_NETCLI_IO) )  {
 				char    strTmp[128];
 
 				pContainer->getDump(strTmp, sizeof(strTmp));
-				log_debug(L_NETCLI_IO, "[netcli] <<< I/O sent container: %s\n", strTmp);
+				log_trace(L_NETCLI_IO, "[netcli] <<< I/O sent container: %s\n", strTmp);
 			}
 			else {
 				log_trace(L_NETCLI, "[netcli(%d)] i/o container sent.\n", sessId);
 			}
 
             pContainer->clear();
-            nresult = pContainer->receive(m_socket, hrRecvTimeout);
+            nresult = pContainer->receive(*m_pSocket, hrRecvTimeout);
 			if ( nresult == ESUCCESS )  {
 				statRecv();
 
-				if ( logger_is_enabled(LT_DEBUG|L_NETCLI_IO) )  {
+				if ( logger_is_enabled(LT_TRACE|L_NETCLI_IO) )  {
 					char    strTmp[128];
 
 					pContainer->getDump(strTmp, sizeof(strTmp));
-					log_debug(L_NETCLI_IO, "[netcli] >>> I/O recv container: %s\n", strTmp);
+					log_trace(L_NETCLI_IO, "[netcli] >>> I/O recv container: %s\n", strTmp);
 				}
 				else {
 					log_trace(L_NETCLI, "[netcli(%d)] container received.\n", sessId);
@@ -470,13 +472,13 @@ void CNetClient::doIo(CNetContainer* pContainer, seqnum_t sessId)
 			}
 			else {
 				log_error(L_NETCLI, "[netcli(%d)] i/o receive failed, error %d\n",
-						  sessId, nresult);
+						  				sessId, nresult);
 				statFail();
 			}
         }
         else {
             log_error(L_NETCLI, "[netcli(%d)] i/o send failed, error %d\n",
-                      sessId, nresult);
+                      					sessId, nresult);
 			statFail();
         }
 
@@ -824,9 +826,7 @@ result_t CNetClient::ioSync(CNetContainer* pContainer)
  */
 void CNetClient::cancel()
 {
-
 }
-
 
 /*
  * [Initialisation API]
@@ -865,7 +865,7 @@ result_t CNetClient::init()
 void CNetClient::terminate()
 {
     CEventLoopThread::stop();
-	m_socket.close();
+	m_pSocket->close();
     CModule::terminate();
 }
 

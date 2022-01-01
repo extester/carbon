@@ -15,10 +15,8 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#include "shell/shell.h"
-#include "shell/logger.h"
+#include "shell/tstdio.h"
 #include "shell/logger/appender_file.h"
-
 
 /*
  * Initialise an appender
@@ -27,8 +25,8 @@
  */
 result_t CAppenderFile::init()
 {
-	struct stat statBuf;
-	int         retVal;
+	struct stat 	statBuf;
+	int         	retVal;
 
 	retVal = ::stat(m_strFilename, &statBuf);
 	if ( retVal == 0 )  {
@@ -36,7 +34,7 @@ result_t CAppenderFile::init()
 	}
 	else  {
 		if ( errno != ENOENT )  {
-			logger_syslog_impl("FILE APPENDER INIT ERROR: failed to get log file '%s' size\n",
+			CLogger::syslog("FILE APPENDER INIT ERROR: failed to get log file '%s' size\n",
 							   m_strFilename);
 		}
 		m_nSize = 0;
@@ -63,13 +61,13 @@ void CAppenderFile::terminate()
  * 		index				appender file index (0..m_nFileCountMax)
  *
  */
-void CAppenderFile::makeFilename(char* strFilename, int index)
+void CAppenderFile::makeFilename(char* strFilename, int index) const
 {
 	if ( index > 0 )  {
 		_tsnprintf(strFilename, APPENDER_FILENAME_MAX, "%s.%d", m_strFilename, index);
 	}
 	else {
-		logger_copy_string_impl(strFilename, m_strFilename, APPENDER_FILENAME_MAX);
+		CLogger::copyString(strFilename, m_strFilename, APPENDER_FILENAME_MAX);
 	}
 }
 
@@ -87,7 +85,7 @@ result_t CAppenderFile::append(const void* pData, size_t nLength)
 	result_t			nresult;
 	int					retVal;
 
-	nresult = logger_append_file(m_strFilename, pData, nLength);
+	nresult = CLogger::appendFile(m_strFilename, pData, nLength);
 	if ( nresult != ESUCCESS ) {
 		return nresult;
 	}
@@ -99,7 +97,6 @@ result_t CAppenderFile::append(const void* pData, size_t nLength)
 		char	strFilename2[APPENDER_FILENAME_MAX];
 
 		makeFilename(strFilename1, (int)m_nFileCountMax-1);
-		//printf("LOGGER: delete file: %s\n", strFilename1); fflush(stdout);
 		::unlink(strFilename1);
 
 		if ( m_nFileCountMax > 1 )  {
@@ -108,13 +105,13 @@ result_t CAppenderFile::append(const void* pData, size_t nLength)
 			for(i=m_nFileCountMax-1; i>0; i--)  {
 				makeFilename(strFilename1, (int)i-1);
 				makeFilename(strFilename2, (int)i);
-				//printf("LOGGER: rename file: %s => %s\n", strFilename1, strFilename2); fflush(stdout);
+
 				retVal = ::rename(strFilename1, strFilename2);
 				if ( retVal < 0 && wasError == FALSE )  {
 					nresult = nresult == ESUCCESS ? errno : nresult;
 
-					logger_syslog_impl("FILE APPENDER ERROR: can't rename '%s' => '%s', result=%d\n",
-								  strFilename1, strFilename2, errno);
+					CLogger::syslog("FILE APPENDER ERROR: can't rename '%s' => '%s', result: %d\n",
+								  		strFilename1, strFilename2, errno);
 					wasError = TRUE;
 				}
 			}
@@ -124,29 +121,4 @@ result_t CAppenderFile::append(const void* pData, size_t nLength)
 	}
 
 	return nresult;
-}
-
-/*
- * Add FILE appender to the existing logger
- *
- *		strFilename			full filename
- *		nFileCountMax		maximum files to store
- *		nFileSizMax			maximum a log file size, bytes
- *
- * Return: appender handle or LOGGER_APPENDER_NULL
- */
-appender_handle_t logger_addFileAppender(const char* strFilename,
-								size_t nFileCountMax, size_t nFileSizeMax)
-{
-	CAppenderFile*		pAppender;
-	appender_handle_t	hAppender;
-
-	pAppender = new CAppenderFile(strFilename, nFileCountMax, nFileSizeMax);
-	hAppender = logger_insert_appender_impl(pAppender);
-	if ( hAppender == LOGGER_APPENDER_NULL )  {
-		/* Failed */
-		delete pAppender;
-	}
-
-	return hAppender;
 }

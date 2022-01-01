@@ -20,7 +20,7 @@
 #include "center.h"
 
 #define CENTER_NAME             "Apollo Center"
-#define CENTER_VERSION          MAKE_VERSION(0, 1)
+#define CENTER_VERSION          MAKE_VERSION(0, 0, 1)
 
 
 /*******************************************************************************

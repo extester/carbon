@@ -22,7 +22,7 @@
  *      argv        command line argument 'argv'
  */
 CEventApp::CEventApp(int argc, char* argv[]) :
-    CApplication("Event Application", MAKE_VERSION(1,0), 1, argc, argv),
+    CApplication("Event Application", MAKE_VERSION(1,0,0), 1, argc, argv),
     m_pReceiver(0)
 {
 }

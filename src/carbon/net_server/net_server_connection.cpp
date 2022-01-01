@@ -79,11 +79,11 @@ void CNetServerConnection::doSend(CNetContainer* pContainer, seqnum_t nSessId)
 		if ( nresult == ESUCCESS || nresult == ECANCELED )  {
 			m_bFailSent = FALSE;
 			if ( nresult == ESUCCESS ) {
-				if ( logger_is_enabled(LT_DEBUG|L_NETSERV_IO) ) {
+				if ( logger_is_enabled(LT_TRACE|L_NETSERV_IO) ) {
 					char    strTmp[128];
 
 					pContainer->getDump(strTmp, sizeof(strTmp));
-					log_debug(L_NETCONN_IO, "[netserv_con] <<< Sent container: %s\n", strTmp);
+					log_trace(L_NETCONN_IO, "[netserv_con] <<< Sent container: %s\n", strTmp);
 				}
 				else {
 					log_trace(L_NETSERV, "[netserv_con(%d)] container sent\n", nSessId);
@@ -150,11 +150,11 @@ result_t CNetServerConnection::doRecv(hr_time_t htTimeout)
 		}
 
 		if ( nresult == ESUCCESS )  {
-			if ( logger_is_enabled(LT_DEBUG|L_NETSERV_IO) ) {
+			if ( logger_is_enabled(LT_TRACE|L_NETSERV_IO) ) {
 				char    strTmp[128];
 
 				pContainer->getDump(strTmp, sizeof(strTmp));
-				log_debug(L_NETCONN_IO, "[netserv_con] >>> Recv container: %s\n", strTmp);
+				log_trace(L_NETCONN_IO, "[netserv_con] >>> Recv container: %s\n", strTmp);
 			}
 			else {
 				log_trace(L_NETSERV, "[netserv_con] received a container\n");
@@ -293,7 +293,7 @@ result_t CNetServerConnection::processReceive()
 
 	hrRecvTimeout = m_pParent->getRecvTimeout();
 	if ( hrTimeout >= hrRecvTimeout )  {
-		//log_debug(L_NETSERV_FL, "[netserv_con] receiving on IDLE...\n");
+		log_trace(L_NETSERV, "[netserv_con] receiving on IDLE...\n");
 		nresult = doRecv(hrRecvTimeout);
 
 		m_cond.lock();

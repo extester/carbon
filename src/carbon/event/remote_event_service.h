@@ -1,6 +1,6 @@
 /*
  *  Carbon framework
- *  External events I/O service
+ *  Remote events I/O service
  *
  *  Copyright (c) 2016 Softland. All rights reserved.
  *  Licensed under the Apache License, Version 2.0
@@ -33,11 +33,11 @@
 class CRemoteEventService : public CModule
 {
 	protected:
-		CEventReceiver*		m_pParent;
+		CEventReceiver*		m_pParent;			/* Default remote event receiver */
 
-		CTcpConnector*		m_pNetConnector;
-		CString				m_strSelfRid;
-		CString				m_strSocket;
+		CTcpConnector*		m_pNetConnector;	/* TCP connector worker */
+		CString				m_strSelfRid;		/* Service remote id */
+		CString				m_strSocket;		/* Local socket filename */
 
 	public:
 		CRemoteEventService(const char* strSelfRid, CEventReceiver* pParent);
@@ -48,7 +48,7 @@ class CRemoteEventService : public CModule
 		virtual void terminate();
 
 		virtual result_t sendEvent(CRemoteEvent* pEvent, const char* strDestRid,
-							CEventReceiver* pReceiver = 0, seqnum_t nSessId = NO_SEQNUM);
+							CEventReceiver* pReceiver = nullptr, seqnum_t nSessId = NO_SEQNUM);
 
 	private:
 		result_t preparePath();

@@ -84,11 +84,12 @@ void CProcUtils::parseCmdLine(const char* strLine, size_t nLength, proc_data_t* 
  * Get process parameters by PID
  *
  * 		pid			process Id to find
- * 		pData		process data [out], may be NULL
+ * 		pData		process data [out], may be nullptr
  *
  * Return:
  * 		ESUCCESS	process found and parameters are filled
- * 		...			process not found
+ * 		ENOENT		process not found
+ * 		...			read error
  */
 result_t CProcUtils::getByPid(pid_t pid, proc_data_t* pData) const
 {
@@ -117,35 +118,40 @@ result_t CProcUtils::getByPid(pid_t pid, proc_data_t* pData) const
 /*
  * Get process parameters by name/cmd
  *
- * 		strName			process name to find
- * 		strSubCmd		process parameters substring (may be 0)
+ * 		strName			process name to find (filename only, no path)
+ * 		strSubCmd		process parameters substring (may be nullptr)
  * 		pData			process parameters array [out]
  * 		nMax			maximum processes in output array
+ * 		pCount			found processes (may be nullptr) [out]
  *
- * Return: number of found processes, 0 on any error
+ * Return:
+ * 		ESUCCESS		0 or more processes found
+ * 		...				error while parsing, pCount contains count of the
+ * 						successfully found processes
  */
-size_t CProcUtils::getByNameCmd(const char* strName, const char* strSubCmd,
-					  	proc_data_t* pData, size_t nMax) const
+result_t CProcUtils::getByNameCmd(const char* strName, const char* strSubCmd,
+					  	proc_data_t* pData, size_t nMax, size_t* pCount) const
 {
-	char			strBuf[512];
-	DIR*			dir;
-	char*			endp;
-	long			pid;
-	struct dirent*	dirent;
-	size_t			count = 0;
+	char				strBuf[512];
+	DIR*				dir;
+	char*				endp;
+	long				pid;
+	struct dirent*		dirent;
+	size_t				count = 0;
 
-	CFile			file;
-	size_t			size;
-	result_t		nresult;
+	CFile				file;
+	size_t				size;
+	result_t			nresult = ESUCCESS, nr;
 
-	shell_assert(pData != NULL);
+	shell_assert(pData != nullptr);
 
 	dir = opendir("/proc");
 	if ( !dir )  {
-		return 0;
+		if ( pCount) *pCount = 0;
+		return errno;
 	}
 
-	while ( (dirent=readdir(dir)) != NULL )  {
+	while ( (dirent=readdir(dir)) != nullptr )  {
 		pid = _tstrtol(dirent->d_name, &endp, 10);
 		if ( *endp != '\0' )  {
 			continue;
@@ -157,16 +163,16 @@ size_t CProcUtils::getByNameCmd(const char* strName, const char* strSubCmd,
 
 		_tsnprintf(strBuf, sizeof(strBuf), "/proc/%lu/cmdline", pid);
 
-		nresult = file.open(strBuf, CFile::fileRead);
-		if ( nresult == ESUCCESS ) {
+		nr = file.open(strBuf, CFile::fileRead);
+		if ( nr == ESUCCESS ) {
 			size = sizeof(strBuf)-1;
-			nresult = file.read(strBuf, &size);
-			if ( nresult == ESUCCESS ) {
+			nr = file.read(strBuf, &size);
+			if ( nr == ESUCCESS ) {
 				proc_data_t		d;
 
 				parseCmdLine(strBuf, size, &d);
 				if ( _tstrlen(d.strName) > 0 && _tstrcmp(d.strName, strName) == 0 ) {
-					if ( strSubCmd == 0 || _tstrstr(d.strParams, strSubCmd) != NULL ) {
+					if ( strSubCmd == nullptr || _tstrstr(d.strParams, strSubCmd) != nullptr ) {
 						pData[count].nPid = (pid_t)pid;
 						copyString(pData[count].strName, d.strName, sizeof(pData[count].strName));
 						copyString(pData[count].strParams, d.strParams, sizeof(pData[count].strParams));
@@ -177,18 +183,37 @@ size_t CProcUtils::getByNameCmd(const char* strName, const char* strSubCmd,
 
 			file.close();
 		}
+
+		nresult_join(nresult, nr);
 	}
 
 	closedir(dir);
-	return count;
+
+	if ( pCount ) *pCount = count;
+	return nresult;
 }
 
-size_t CProcUtils::killByNameCmd(const char* strName, const char* strSubCmd, hr_time_t hrTimeout) const
+/*
+ * Kill a specified processes
+ *
+ * 		strName			process name (filename without path)
+ * 		strSubCmd		part of the process command line (may be nullptr)
+ * 		hrTimeout		maximum timeout for the killing all processes
+ * 		pCount			killed processes (may be nullptr) [out]
+ *
+ * Return:
+ * 		ESUCCESS		0 or more processes were killed
+ * 		...				error while killing, pCount contains count of the
+ * 						successfully killed processes
+ */
+result_t CProcUtils::killByNameCmd(const char* strName, const char* strSubCmd,
+								 	hr_time_t hrTimeout, size_t* pCount) const
 {
 	proc_data_t		pdata;
-	size_t			nKillCount = 0, count;
+	size_t			count = 0, n;
 	hr_time_t		hrStart;
 	int				i;
+	result_t		nresult = ESUCCESS;
 	const int		nIterTerm = (int)(hrTimeout/HR_200MSEC), nIterKill = nIterTerm/2;
 
 	shell_assert(strName);
@@ -197,10 +222,11 @@ size_t CProcUtils::killByNameCmd(const char* strName, const char* strSubCmd, hr_
 	hrStart = hr_time_now();
 
 	while ( hr_time_get_elapsed(hrStart) < hrTimeout ) {
-		count = getByNameCmd(strName, strSubCmd, &pdata, 1);
-		if ( count == 0 ) {
+		nresult = getByNameCmd(strName, strSubCmd, &pdata, 1, &n);
+		if ( nresult != ESUCCESS || n == 0 )  {
 			break;
 		}
+
 		shell_assert(pdata.nPid != 0);
 
 		for(i=0; i<nIterTerm; i++)  {
@@ -210,14 +236,14 @@ size_t CProcUtils::killByNameCmd(const char* strName, const char* strSubCmd, hr_
 				hr_sleep(HR_200MSEC);
 			}
 			else {
-				nKillCount++;
+				count++;
 				break /*for*/;
 			}
 		}
 
 		if ( getByPid(pdata.nPid) == ESUCCESS ) {
 			log_debug(L_GEN, "[proc_utils] terminate (term) '%s' pid=%u failed\n",
-						strName, pdata.nPid);
+										strName, pdata.nPid);
 
 			for(i=0; i<nIterKill; i++)  {
 				kill(pdata.nPid, SIGKILL);
@@ -226,7 +252,7 @@ size_t CProcUtils::killByNameCmd(const char* strName, const char* strSubCmd, hr_
 					hr_sleep(HR_200MSEC);
 				}
 				else {
-					nKillCount++;
+					count++;
 					break /*for*/;
 				}
 			}
@@ -234,27 +260,14 @@ size_t CProcUtils::killByNameCmd(const char* strName, const char* strSubCmd, hr_
 
 		if ( getByPid(pdata.nPid) == ESUCCESS ) {
 			log_error(L_GEN, "[proc_utils] kill (kill) '%s' pid=%u failed\n",
-					  strName, pdata.nPid);
+					  				strName, pdata.nPid);
+			nresult = EBUSY;
 			break /*while*/;
 		}
 	}
 
-	return nKillCount;
-}
-
-/*
- * Dump proc data
- *
- * 		pData		data to dump
- * 		strPref		dump line prefix (optional)
- */
-void CProcUtils::dumpProcData(const proc_data_t* pData, const char* strPref)
-{
-	shell_assert(pData);
-
-	log_dump("*** %sProcData: pid=%lu\n", strPref, pData->nPid);
-	log_dump("      Short executable: '%s'\n", pData->strName);
-	log_dump("      Parameters:       '%s'\n", pData->strParams);
+	if ( pCount ) *pCount = count;
+	return nresult;
 }
 
 /*
@@ -314,4 +327,23 @@ result_t CProcUtils::sendSignal(pid_t pid, int signal) const
 	}
 
 	return nresult;
+}
+
+/*******************************************************************************
+ * Debugging support
+ */
+
+/*
+ * Dump proc data
+ *
+ * 		pData			data to dump
+ * 		strPref			dump line prefix (optional)
+ */
+void CProcUtils::dumpProcData(const proc_data_t* pData, const char* strPref)
+{
+	shell_assert(pData);
+
+	log_dump("*** %sProcData: pid=%lu\n", strPref, pData->nPid);
+	log_dump("      Short executable: '%s'\n", pData->strName);
+	log_dump("      Parameters:       '%s'\n", pData->strParams);
 }

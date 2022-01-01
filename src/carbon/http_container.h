@@ -26,6 +26,7 @@
 #define HTTP_CONTENT_LENGTH			"Content-Length"
 #define HTTP_CONTENT_TYPE			"Content-Type"
 #define HTTP_ACCEPT_ENCODING		"Content-Encoding"
+#define HTTP_TRANSFER_ENCODING		"Transfer-Encoding"
 
 
 class CHttpContainer : public CNetContainer
@@ -56,6 +57,7 @@ class CHttpContainer : public CNetContainer
 
 		const char* getStart() const { return m_strStart; }
 
+		result_t getCode(int* pCode) const;
 		void* getBody() { return m_pBody; }
 		size_t getBodySize() const { return  m_nCurSize; }
 
@@ -73,6 +75,7 @@ class CHttpContainer : public CNetContainer
 		int findHeader(const char* strHeader) const ;
 		result_t serialise(char** ppBuffer, size_t* pSize);
 		virtual int getContentLength() const;
+		result_t receiveChunked(CSocket& socket, hr_time_t hrTimeout);
 };
 
 #endif /* __CARBON_HTTP_CONTAINER_H_INCLUDED__ */

@@ -92,6 +92,62 @@ void CHttpContainer::setStartLine(const char* strStart)
 	m_strStart = CString(p, A(e)-A(p));
 }
 
+/*
+ * Parse HTTP result code from start line
+ *
+ * 		pCode		parsed code (may be nullptr) [out]
+ *
+ * Return:
+ * 		ESUCCESS		success, pCode contains http code
+ * 		ENOENT			empty start line
+ * 		EINVAL			can't parse code, invalid format
+ *
+ * Line format:
+ * 		HTTP/1.0 <code> <str>
+ * 		HTTP/1.1 <code> <str>
+ * 		HTTP/2 <code> <str>
+ */
+result_t CHttpContainer::getCode(int* pCode) const
+{
+	const char*		s = m_strStart;
+	size_t			length;
+	result_t		nresult;
+
+	if ( m_strStart.isEmpty() )  {
+		return ENOENT;
+	}
+
+	SKIP_CHARS(s, " \t");
+	length = _tstrlen(s);
+
+	nresult = ESUCCESS;
+	if ( length > 8 && _tmemcmp(s, "HTTP/1.1", 8) == 0 )  {
+		s += 8;
+	} else if ( length > 6 && _tmemcmp(s, "HTTP/2", 6) == 0 ) {
+		s += 6;
+	} else if ( length > 8 && _tmemcmp(s, "HTTP/1.0", 8) == 0 ) {
+		s += 8;
+	} else {
+		nresult = EINVAL;
+	}
+
+	if ( nresult == ESUCCESS )  {
+		const char*		p;
+		int				code;
+
+		SKIP_CHARS(s, " \t");
+		p = s;
+		SKIP_NON_CHARS(s, " \t");
+
+		nresult = CString(p, A(s)-A(p)).getNumber(code);
+		if ( nresult == ESUCCESS )  {
+			if ( pCode )  { *pCode = code; }
+		}
+	}
+
+	return nresult;
+}
+
 void CHttpContainer::appendHeader(const char* strHeader)
 {
 	const char 	*p, *e;
@@ -392,9 +448,7 @@ result_t CHttpContainer::send(CSocket& socket, hr_time_t hrTimeout, const CNetAd
  *
  * Return:
  * 		-1 		undefined
- * 		0		no content in the message
- * 		n		content length, bytes
- *
+ * 		n		content length, bytes (may be 0)
  */
 int CHttpContainer::getContentLength() const
 {
@@ -428,7 +482,7 @@ int CHttpContainer::getContentLength() const
 		}
 	}
 	else {
-		nSize = 0;
+		nSize = -1;
 	}
 
 	return nSize;
@@ -438,6 +492,7 @@ int CHttpContainer::getContentLength() const
 result_t CHttpContainer::receive(CSocket& socket, hr_time_t hrTimeout, CNetAddr* pSrcAddr)
 {
 	char		strBuf[2048];
+	CString		strTransferEncoding;
 	hr_time_t	hrNow;
 	size_t		length;
 	int 		contentLength = -1;
@@ -467,7 +522,7 @@ result_t CHttpContainer::receive(CSocket& socket, hr_time_t hrTimeout, CNetAddr*
 					stage = RECV_HEADER;
 				}
 				else {
-					if ( nresult != ECANCELED ) {
+					if ( nresult != ECANCELED && !IS_NETWORK_CONNECTION_CLOSED(nresult) ) {
 						/* ECANCELED - forced by used to stop receiving */
 						log_error(L_GEN, "[http_cont] failed to receive start line, result %d\n",
 								  	nresult);
@@ -487,9 +542,9 @@ result_t CHttpContainer::receive(CSocket& socket, hr_time_t hrTimeout, CNetAddr*
 						 * Received a header/body separator
 						 */
 						contentLength = getContentLength();
-						if ( contentLength == 0 )  {
-							bDone = TRUE;
-						}
+						//if ( contentLength == 0 )  {
+						//	bDone = TRUE;
+						//}
 						stage = RECV_BODY;
 					}
 					else {
@@ -527,17 +582,24 @@ result_t CHttpContainer::receive(CSocket& socket, hr_time_t hrTimeout, CNetAddr*
 				}
 				else {
 					/* Content-Length was not specified */
-					length = sizeof(strBuf);
-					nresult = socket.receive(strBuf, &length, 0, hr_timeout(hrNow, hrTimeout));
-					if ( nresult == ESUCCESS )  {
-						appendBody(strBuf, length);
+					if ( getHeader(strTransferEncoding, HTTP_TRANSFER_ENCODING) &&
+							_tstrstr(strTransferEncoding, "chunked") != nullptr ) {
+						nresult = receiveChunked(socket, hr_timeout(hrNow, hrTimeout));
+						bDone = TRUE;
 					}
 					else {
-						if ( length != 0 )  {
+						length = sizeof(strBuf);
+						nresult = socket.receive(strBuf, &length, 0, hr_timeout(hrNow, hrTimeout));
+						if ( nresult == ESUCCESS )  {
 							appendBody(strBuf, length);
 						}
-						nresult = ESUCCESS;
-						bDone = TRUE;
+						else {
+							if ( length != 0 )  {
+								appendBody(strBuf, length);
+							}
+							nresult = ESUCCESS;
+							bDone = TRUE;
+						}
 					}
 				}
 				break;
@@ -550,6 +612,112 @@ result_t CHttpContainer::receive(CSocket& socket, hr_time_t hrTimeout, CNetAddr*
 
 	return nresult;
 }
+
+result_t CHttpContainer::receiveChunked(CSocket& socket, hr_time_t hrTimeout)
+{
+	char 		strBuffer[4096];
+	char*		strBufferExt = nullptr, *tbuf;
+	size_t		nBufferExtSize = 0, length;
+	int			nChunkLength;
+	hr_time_t	hrStart = hr_time_now();
+	result_t 	nresult;
+
+	/* Receive chunks */
+	while ( true )  {
+		length = sizeof(strBuffer);
+		nresult = socket.receiveLine(strBuffer, &length, HTTP_EOL, hr_timeout(hrStart, hrTimeout));
+		if ( nresult != ESUCCESS )  {
+			break;
+		}
+
+		log_trace(L_HTTP_CONT, "[http_cont] chunk length line: '%s'\n", strBuffer);
+
+		CString		strSize(strBuffer);
+
+		strSize.ltrim(" \t");
+		strSize.rtrim(" \t" HTTP_EOL "\0");
+		nresult = strSize.getNumber(nChunkLength, 16);
+		if ( nresult != ESUCCESS ) {
+			log_error(L_GEN, "[http_cont] invalid chunk hexadecimal number '%s'\n", strSize.cs());
+			break;
+		}
+
+		if ( nChunkLength < 0 || nChunkLength > 1024*1024*128 )  {
+			log_error(L_GEN, "[http_cont] invalid chunk length %ld'\n", nChunkLength);
+			break;
+		}
+
+		if ( nChunkLength == 0 )  {
+			break;	/* last chunk */
+		}
+
+		if ( (nChunkLength+HTTP_EOL_LEN) < (int)(sizeof(strBuffer)-1) )  {
+			length = nChunkLength+HTTP_EOL_LEN;
+			tbuf = strBuffer;
+			nresult = socket.receive(strBuffer, &length, CSocket::readFull,
+									 	hr_timeout(hrStart, hrTimeout));
+		}
+		else {
+			if ( (int)nBufferExtSize >= (nChunkLength+HTTP_EOL_LEN+1) )  {
+				length = nChunkLength+HTTP_EOL_LEN;
+				tbuf = strBufferExt;
+				nresult = socket.receive(strBufferExt, &length, CSocket::readFull,
+										 	hr_timeout(hrStart, hrTimeout));
+			}
+			else {
+				strBufferExt = (char*)memRealloc(strBuffer, nChunkLength+HTTP_EOL_LEN+1);
+				if ( strBufferExt != nullptr )  {
+					nBufferExtSize = nChunkLength+HTTP_EOL_LEN+1;
+					length = nChunkLength+HTTP_EOL_LEN;
+					tbuf = strBufferExt;
+					nresult = socket.receive(strBufferExt, &length, CSocket::readFull,
+											 	hr_timeout(hrStart, hrTimeout));
+				}
+				else {
+					log_error(L_GEN, "[http_cont] memory allocation failure, %lu bytes\n",
+							  			nChunkLength+HTTP_EOL_LEN+1);
+					nresult = ENOMEM;
+				}
+			}
+		}
+
+		if ( nresult != ESUCCESS )  {
+			break;
+		}
+
+		log_trace(L_HTTP_CONT, "[http_cont] received chunk: '%s'\n", tbuf);
+		appendBody(tbuf, length-HTTP_EOL_LEN);
+	}
+
+	if ( nresult == ESUCCESS )  {
+		/* Skip trailers */
+		while ( true )  {
+			length = sizeof(strBuffer);
+			nresult = socket.receiveLine(strBuffer, &length, HTTP_EOL, hr_timeout(hrStart, hrTimeout));
+			if ( nresult != ESUCCESS )  {
+				break;
+			}
+
+			CString		strLine(strBuffer);
+
+			strLine.ltrim(" \t");
+			strLine.rtrim(" \t" HTTP_EOL "\0");
+			if ( strLine.isEmpty() )  {
+				break;
+			}
+
+			log_trace(L_HTTP_CONT, "[http_cont] received trailer (dropped): '%s'\n", strBuffer);
+		}
+	}
+
+	if ( strBufferExt != nullptr )  {
+		memFree(strBufferExt);
+		strBufferExt = nullptr;
+	}
+
+	return nresult;
+}
+
 
 /*******************************************************************************
  * Debugging support

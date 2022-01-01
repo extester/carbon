@@ -37,16 +37,16 @@ class CThreadPoolItem : public CEventLoopThread, public CEventReceiver
 
 	public:
 		boolean_t isBusy() const {
-			return atomic_get(&m_busy) != 0;
+			return sh_atomic_get(&m_busy) != 0;
 		}
 
 		void setBusy() {
-			atomic_set(&m_busy, 1);
+			sh_atomic_set(&m_busy, 1);
 		}
 
 	protected:
 		virtual void onIdle() {
-			atomic_set(&m_busy, 0);
+			sh_atomic_set(&m_busy, 0);
 		}
 
 		virtual boolean_t processEvent(CEvent* pEvent) = 0;

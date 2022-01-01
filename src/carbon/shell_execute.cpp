@@ -140,23 +140,33 @@ result_t shellExecuteSync(const char* strCmd, CEventReceiver* pReplyReceiver,
 
 #define SHELL_EXECUTE_PROGRAM			"shell_execute"
 
+/*
+ * Start shellExecute server
+ *
+ * 		strExecPath		path with server executable file
+ *
+ * Return:
+ * 		ESUCCESS		successfully started
+ * 		EEXIST			previous instance already running
+ * 		...				failure, fork error code
+ */
 result_t shellExecuteStartServer(const char* strExecPath)
 {
-	char			strPath[256];
-	CProcUtils		pu;
-	proc_data_t		pu_data;
-	size_t			count;
-	result_t		nresult;
+	char						strPath[256];
+	CProcUtils					pu;
+	CProcUtils::proc_data_t		pu_data;
+	size_t						count;
+	result_t					nresult;
 
-	pid_t			pid;
-	static const char* argv[] = { SHELL_EXECUTE_PROGRAM, "", 0 };
+	pid_t						pid;
+	static const char* 			argv[] = { SHELL_EXECUTE_PROGRAM, "", 0 };
 
 	/*
 	 * Check if a shell_execute server is running already
 	 */
-	count = pu.getByName(SHELL_EXECUTE_PROGRAM, &pu_data, 1);
+	pu.getByName(SHELL_EXECUTE_PROGRAM, &pu_data, 1, &count);
 	if ( count > 0 )  {
-		//log_debug(L_GEN, "[shell_execute] server already started, count=%d\n", count);
+		log_warning(L_GEN, "[shell_execute] server already started\n");
 		return EEXIST;
 	}
 
@@ -171,8 +181,12 @@ result_t shellExecuteStartServer(const char* strExecPath)
 	}
 
 	if ( pid != 0 )  {
+		/*
+		 * Parent process
+		 */
 		return ESUCCESS;
 	}
+
 	/*
 	 * Child process
 	 */
@@ -180,7 +194,7 @@ result_t shellExecuteStartServer(const char* strExecPath)
 	execv(strPath, (char* const*)argv);
 	nresult = errno;
 	log_error(L_GEN, "[shell_execute] execv() failed, path %s, result %s(%d)\n",
-			  	strPath, strerror(nresult), nresult);
+			  					strPath, strerror(nresult), nresult);
 
 	exit(127); /* command not found */
 	return nresult;
@@ -192,8 +206,80 @@ result_t shellExecuteStopServer()
 	size_t		count;
 	result_t	nresult;
 
-	count = pu.killByName(SHELL_EXECUTE_PROGRAM, HR_30SEC);
+	pu.killByName(SHELL_EXECUTE_PROGRAM, HR_30SEC, &count);
 	nresult = count > 0 ? ESUCCESS : ENOENT;
+
+	return nresult;
+}
+
+/*
+ * Stop shellexecute server
+ *
+ * 		hrKillTime		maximum time to awaiting for server kill
+ *
+ * Return:
+ * 		ESUCCESS		server stopped, no any shellExecute instance running
+ * 		EEXIST			can't stop server, still running
+ */
+result_t shellExecuteStopServer(hr_time_t hrKillTime)
+{
+	CProcUtils					pu;
+	CProcUtils::proc_data_t		data[1];
+	size_t						count;
+
+	pu.killByName(SHELL_EXECUTE_PROGRAM, hrKillTime);
+	pu.getByName(SHELL_EXECUTE_PROGRAM, data, ARRAY_SIZE(data), &count);
+	if ( count > 0 )  {
+		log_error(L_GEN, "[shell_execute] can't stop all ShellExecute instances\n");
+	}
+
+	return count == 0 ? ESUCCESS : EEXIST;
+}
+
+/*
+ * Start (or restart) shell execute server
+ *
+ * 		strExecPath		path with server executable file
+ * 		hrStartTime		maximum time to awaiting for server startup
+ * 		hrKillTime		miximum time to awaiting for previous server kill
+ *
+ * Return:
+ * 		ESUCCESS		server successfully started
+ * 		ETIMEDOUT		server is not started within given timeout (default is: 3s)
+ * 		EEXIST			server is not started, can't stop previous server
+ * 		ENOENT			server executable file is not found
+ * 		EFAULT			server is not started, any other errors
+ */
+result_t shellExecuteStartServer(const char* strExecPath, hr_time_t hrStartTime, hr_time_t hrKillTime)
+{
+	result_t	nresult;
+
+	nresult = shellExecuteStopServer(hrKillTime);
+	if ( nresult == ESUCCESS )  {
+		nresult = shellExecuteStartServer(strExecPath);
+		if ( nresult == ESUCCESS )  {
+			/* Wait for process */
+			size_t					i, nIter = hrStartTime/HR_250MSEC;
+			CProcUtils				pu;
+			CProcUtils::proc_data_t	data[1];
+			size_t					count;
+
+			nresult = ETIMEDOUT;
+			nIter = sh_min(nIter, 1);
+
+			for(i=0; i<nIter; i++)  {
+				hr_sleep(HR_250MSEC);
+				pu.getByName(SHELL_EXECUTE_PROGRAM, data, ARRAY_SIZE(data), &count);
+				if ( count > 0 )  {
+					nresult = ESUCCESS;
+					break;
+				}
+			}
+		}
+		else {
+			nresult = EFAULT;
+		}
+	}
 
 	return nresult;
 }

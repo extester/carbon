@@ -1,4 +1,5 @@
 
 MODULE_DEP +=
 
-THPARTY_DEP += sqlite
+THPARTY_DEP += 
+#sqlite

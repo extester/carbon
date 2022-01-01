@@ -10,6 +10,9 @@
 #   Revision 1.0, 09.02.2017 11:32:25
 #	Initial revision.
 #
+#   Revision 1.1, 05.10.2021 16:32:57
+#	Added CARBON_DATE thparty module support
+#
 #
 #   Input variables:
 #	CARBON_MACHINE="machine"
@@ -44,6 +47,11 @@ endif
 ifeq ($(CARBON_ZLIB),1)
 THPARTY_DEP += zlib
 endif
+
+ifeq ($(CARBON_DATE),1)
+THPARTY_DEP += date
+endif
+
 
 ifndef CARBON_OBJECT_NAME_LENGTH
 CARBON_OBJECT_NAME_LENGTH=48

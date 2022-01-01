@@ -1,53 +1,102 @@
 /*
- *  Carbon/DB module
- *  Mysql database class
+ *  Telemetrica TeleGeo backend server
+ *  MySQL Database
  *
- *  Copyright (c) 2015 Softland. All rights reserved.
- *  Licensed under the Apache License, Version 2.0
+ *  Copyright (c) 2020 Telemetrica. All rights reserved.
  */
 /*
  *  Revision history:
  *
- *  Revision 1.0, 28.07.2015 23:20:18
+ *  Revision 1.0, 03.08.2020 12:39:33
  *      Initial revision.
  */
 
-#ifndef __CARBON_DB_MYSQL_H_INCLUDED__
-#define __CARBON_DB_MYSQL_H_INCLUDED__
+#ifndef __DB_MYSQL_H_INCLUDED__
+#define __DB_MYSQL_H_INCLUDED__
 
 #include <mysql/mysql.h>
 
-#include "carbon/carbon.h"
+#include "shell/netaddr.h"
+#include "shell/atomic.h"
+#include "carbon/cstring.h"
 
-#include "db/db.h"
+#include "db/db_sql.h"
+#include "db/db_mysql_result.h"
 
-class CDbMysql : public CDb
+/*
+ * MySQL database class
+ */
+class CDbMySql : public CDbSql
 {
-	private:
-		static __thread boolean_t 	m_bThreadInitialised;
-		static boolean_t			m_bLibraryInitialised;
+	friend class CMySqlResult;
 
 	protected:
-		MYSQL*			m_pMysqlConn;
+		CNetAddr		m_server;				/* DB server address */
+		CString			m_strUser;				/* User login */
+		CString			m_strPass;				/* User password */
+		CString			m_strCharset;			/* DB connection charset, default is 'utf8' */
+		CString			m_strCollation;			/* DB connection collate, default is 'utf8_general_ci' */
+		CString			m_strDb;
+
+		MYSQL*			m_pHandle;				/* Mysql connection handle */
+		int				m_nAutoReconnect;		/* 0 - do not use autoreconnect,
+ 												 * n - use n tries */
+
+		atomic_t 		m_nResultCount;			/* Debugging: calculating result/free ops */
+
+		static boolean_t 			m_bDbMySqlLibraryInitialised;
+		static __thread boolean_t 	m_bDbMysqlThreadInitialised;
 
 	public:
-		CDbMysql(const char* strName = "db-mysql");
-		virtual ~CDbMysql();
+		CDbMySql(const CNetAddr& server, const char* strUser, const char* strPass,
+		   			 const char* strCharset, const char* strCollation,
+		   			 const char* strDb, const char* strName);
+
+		CDbMySql(const CNetAddr& server, const char* strUser, const char* strPass,
+					 const char* strDb, const char* strName);
+
+		virtual ~CDbMySql();
+
+		static result_t initLibrary();
+		static void terminateLibrary();
+
+		static result_t initThread();
+		static void terminateThread();
 
 	public:
-		static result_t libraryInit();
-		static void libraryExit();
+		void setAutoReconnect(int nAutoReconnect);
 
-		static result_t threadInit();
-		static void threadExit();
+		virtual result_t connect();
+		virtual result_t disconnect();
+		virtual	boolean_t isConnected() const { return m_pHandle != nullptr; }
 
-		virtual result_t init();
-		virtual void terminate();
+		virtual result_t query(const char* strQuery);
+
+		virtual result_t queryValue(const char* strQuery, CString* pString);
+		virtual result_t queryValue(const char* strQuery, uint64_t* pValue);
+		virtual result_t queryValue(const char* strQuery, int64_t* pValue);
+		virtual result_t queryValue(const char* strQuery, uint32_t* pValue);
+		virtual result_t queryValue(const char* strQuery, int32_t* pValue);
+
+		virtual result_t queryRow(const char* strQuery, str_vector_t* pVector);
+
+		virtual void iterate(const char* strQuery, CSqlResult* pResult) noexcept(false);
+
+		virtual result_t escapeSafe(const char* strQuery, CString& strOut);
+		virtual void escape(const char* strQuery, CString& strOut) noexcept(false);
+
+		virtual result_t recordInsert(const char* strQuery, const char* strTable, uint32_t* pId);
+		virtual result_t recordInsert(const char* strQuery, const char* strTable, uint64_t* pId);
 
 	protected:
-		void checkThreadInit() const {
-			shell_assert(m_bThreadInitialised);
-		}
+		result_t doConnect();
+		void doDisconnect();
+		result_t doQuery(const char* strQuery);
+
+	public:
+		virtual void dump(const char* strPref = "") const;
 };
 
-#endif /* __CARBON_DB_MYSQL_H_INCLUDED__ */
+extern result_t errMySql2Nr(unsigned int nErr);
+
+#endif /* __DB_MYSQL_H_INCLUDED__ */

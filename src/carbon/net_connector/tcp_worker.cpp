@@ -125,11 +125,11 @@ void CTcpWorkerItem::processReceive(CSocketRef* pSocket)
     if ( nresult == ESUCCESS )  {
 		pParent->statRecv();
 
-        if ( logger_is_enabled(LT_DEBUG|L_NETCONN_IO) )  {
+        if ( logger_is_enabled(LT_TRACE|L_NETCONN_IO) )  {
             char    strTmp[128];
 
 			pContainer->getDump(strTmp, sizeof(strTmp));
-            log_debug(L_NETCONN_IO, "[tcpconn_work] >>> Recv container: %s\n", strTmp);
+            log_trace(L_NETCONN_IO, "[tcpconn_work] >>> Recv container: %s\n", strTmp);
         }
 
 		/*
@@ -181,11 +181,11 @@ void CTcpWorkerItem::processSend(CNetContainer* pContainer, CSocketRef* pSocket,
     if ( nresult == ESUCCESS ) {
 		pParent->statSend();
 
-        if ( logger_is_enabled(LT_DEBUG|L_NETCONN_IO) )  {
+        if ( logger_is_enabled(LT_TRACE|L_NETCONN_IO) )  {
             char    strTmp[128];
 
             pContainer->getDump(strTmp, sizeof(strTmp));
-            log_debug(L_NETCONN_IO, "[tcpconn_work] <<< Sent container: %s\n", strTmp);
+            log_trace(L_NETCONN_IO, "[tcpconn_work] <<< Sent container: %s\n", strTmp);
         }
 		else {
 			log_trace(L_NETCONN, "[tcpconn_work(%d)] container send\n", sessId);
@@ -231,11 +231,11 @@ void CTcpWorkerItem::processSendLocal(CNetContainer* pContainer, const char* str
 		if ( nresult == ESUCCESS ) {
 			pParent->statSend();
 
-			if ( logger_is_enabled(LT_DEBUG|L_NETCONN_IO) )  {
+			if ( logger_is_enabled(LT_TRACE|L_NETCONN_IO) )  {
 				char    strTmp[128];
 
 				pContainer->getDump(strTmp, sizeof(strTmp));
-				log_debug(L_NETCONN_IO, "[tcpconn_work] <<< Sent container: %s\n", strTmp);
+				log_trace(L_NETCONN_IO, "[tcpconn_work] <<< Sent container: %s\n", strTmp);
 			}
 			else {
 				log_trace(L_NETCONN, "[tcpconn_work(%d)] container send\n", sessId);
@@ -281,13 +281,13 @@ void CTcpWorkerItem::processIo(CNetContainer* pContainer, const CNetAddr& destAd
 
         nresult = IO.execute(pContainer, outContainerPtr, destAddr, bindAddr);
         if ( nresult == ESUCCESS )  {
-            if ( logger_is_enabled(LT_DEBUG|L_NETCONN_IO) )  {
+            if ( logger_is_enabled(LT_TRACE|L_NETCONN_IO) )  {
                 char    strTmpOut[128], strTmpIn[128];
 
                 pContainer->getDump(strTmpOut, sizeof(strTmpOut));
                 outContainerPtr->getDump(strTmpIn, sizeof(strTmpIn));
-                log_debug(L_NETCONN_IO, "[tcpconn_work] <<< I/O Sent container: %s\n", strTmpOut);
-                log_debug(L_NETCONN_IO, "[tcpconn_work] >>> I/O Recv container: %s\n", strTmpIn);
+                log_trace(L_NETCONN_IO, "[tcpconn_work] <<< I/O Sent container: %s\n", strTmpOut);
+                log_trace(L_NETCONN_IO, "[tcpconn_work] >>> I/O Recv container: %s\n", strTmpIn);
             }
 			else {
 				log_trace(L_NETCONN, "[tcpconn_work(%d)] I/O executed success\n", sessId);

@@ -26,7 +26,9 @@ extern uint16_t crc16(const void* pData, size_t nSize);
 extern void sleep_s(unsigned int nSecond);
 extern void sleep_ms(unsigned int nMillisecond);
 extern void sleep_us(unsigned int nMicrosecond);
-extern result_t parseVersion(const char* strVer, version_t* pVersion);
+
+extern result_t parseVersion(const char* strVersion, version_t* pVersion = nullptr);
+extern const char* formatVersion(version_t nVersion, char* strVersion, size_t nLength);
 
 extern int parseMacAddr(const char* strMac, uint8_t* pMac);
 extern void convMacAddr(const uint8_t* pMac, char* strMac);

@@ -147,7 +147,7 @@ class CUdpConnector : public CModule
         virtual ~CUdpConnector();
 
     public:
-		boolean_t isTerminating() const { return atomic_get(&m_bDone) != 0; }
+		boolean_t isTerminating() const { return sh_atomic_get(&m_bDone) != 0; }
 
         /* Statistic functions */
         virtual size_t getStatSize() const {

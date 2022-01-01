@@ -69,7 +69,7 @@ CJsonItem* CJsonItem::getRoot()
 	CJsonItem		*pItem, *pParent;
 
 	pItem = this;
-	while ( (pParent=pItem->getParent()) != 0 )  {
+	while ( (pParent=pItem->getParent()) != nullptr )  {
 		pItem = pParent;
 	}
 
@@ -1033,7 +1033,7 @@ result_t CJsonArray::load(const char* strJson, size_t nLength)
 	s = strJson;
 	nLen = nLength;
 	if ( s != 0 )  {
-		while ( nLen > 0 && *s != '\0' )  {
+		while ( nLen > 0 && _tstrchr(" \t", *s) != NULL )  {
 			s++; nLen--;
 		}
 	}

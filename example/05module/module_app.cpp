@@ -23,7 +23,7 @@
  *      argv        command line argument 'argv'
  */
 CModuleApp::CModuleApp(int argc, char* argv[]) :
-    CApplication("Module Application", MAKE_VERSION(1,0), 1, argc, argv),
+    CApplication("Module Application", MAKE_VERSION(1,0,0), 1, argc, argv),
     m_pReceiver(0),
     m_pKeyboard(0)
 {

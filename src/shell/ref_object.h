@@ -28,20 +28,20 @@ class CRefObject
 
     protected:
         CRefObject() {
-            atomic_set(&m_nRefCount, 1);
+            sh_atomic_set(&m_nRefCount, 1);
             m_bDeleted = FALSE;
         }
 
         virtual ~CRefObject() {}
 
     public:
-        virtual int getRefCount() const { return atomic_get(&m_nRefCount); }
-        virtual int reference() { return atomic_inc(&m_nRefCount); }
+        virtual int getRefCount() const { return sh_atomic_get(&m_nRefCount); }
+        virtual int reference() { return sh_atomic_inc(&m_nRefCount); }
 		virtual int release() {
 			int nRefCount = getRefCount();
 
 			shell_assert(nRefCount > 0);
-			if ( (nRefCount = atomic_dec(&m_nRefCount)) <= 0 ) {
+			if ( (nRefCount = sh_atomic_dec(&m_nRefCount)) <= 0 ) {
 				delete this;
 			}
 

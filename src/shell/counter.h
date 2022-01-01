@@ -27,15 +27,15 @@
  */
 typedef atomic_t	counter_t;
 
-#define counter_add(__counter, __delta)     atomic_add(&(__counter), __delta)
-#define counter_sub(__counter, __delta)     atomic_sub(&(__counter), __delta)
+#define counter_add(__counter, __delta)     sh_atomic_add(&(__counter), __delta)
+#define counter_sub(__counter, __delta)     sh_atomic_sub(&(__counter), __delta)
 #define counter_inc(__counter)          	counter_add(__counter, 1)
 #define counter_dec(__counter)          	counter_sub(__counter, 1)
 
-#define counter_get(__counter)          	atomic_get(&(__counter))
-#define counter_set(__counter, __count)		atomic_set(&(__counter), (__count))
+#define counter_get(__counter)          	sh_atomic_get(&(__counter))
+#define counter_set(__counter, __count)		sh_atomic_set(&(__counter), (__count))
 
-#define counter_init(__counter)         	atomic_set(&(__counter), 0)
+#define counter_init(__counter)         	sh_atomic_set(&(__counter), 0)
 #define counter_reset_struct(__struct)		_tbzero_object(__struct)
 
 #define ZERO_COUNTER    					ZERO_ATOMIC

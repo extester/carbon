@@ -332,7 +332,7 @@ result_t CFileAsync::readAsync(void* pBuffer, size_t* pSize)
 	char*		p = (char*)pBuffer;
 	result_t	nresult;
 
-	//log_debug(L_FILE_FL, "[file] read %d bytes\n", *pSize);
+	//log_trace(L_FILE, "[file] file %s, read %d bytes\n", m_strFile, *pSize);
 
 	if ( !isOpen() )  {
 		*pSize = 0;
@@ -359,8 +359,10 @@ result_t CFileAsync::readAsync(void* pBuffer, size_t* pSize)
 
 		if ( len == 0 )  {
 			/* End of file */
-			log_trace(L_FILE, "[file] file %s, end of file reached\n", m_strFile);
-			nresult = ENODATA;
+			if ( length == 0 ) {
+				//log_trace(L_FILE, "[file] file %s, end of file reached\n", m_strFile);
+				nresult = ENODATA;
+			}
 			break;
 		}
 
@@ -913,7 +915,7 @@ result_t CFile::read(void* pBuffer, size_t* pSize, int options, hr_time_t hrTime
 			nresult = readAsync(pBuf+length, &size);
 			length += size;
 
-			if ( length > 0 && !(options&CFile::fileReadFull) )  {
+			if ( /*length > 0 &&*/ !(options&CFile::fileReadFull) )  {
 				if ( nresult == EAGAIN || nresult == ENODATA )  {
 					nresult = ESUCCESS;
 				}

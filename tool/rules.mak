@@ -53,7 +53,7 @@ _MACHINE_DEF=__embed__
 endif
 DEFINES += -D$(_MACHINE_DEF)=1
 
-CFLAGS += -Wall -Werror -Wno-error=array-bounds 
+CFLAGS += -Wall -Werror -Wno-error=array-bounds -Wno-format-truncation
 CFLAGS_unix += -pthread
 CFLAGS_embed += 
 

@@ -28,17 +28,18 @@ typedef struct atomic  {
 
 #define ZERO_ATOMIC {0}
 
-#define atomic_set(__atomic, __value)		((__atomic)->value = (__value))
-#define atomic_get(__atomic)				(__atomic)->value
+#define sh_atomic_set(__atomic, __value)		((__atomic)->value = (__value))
+#define sh_atomic_get(__atomic)				(__atomic)->value
 
-#define atomic_add(__atomic, __value)	\
+/* Returns a new value */
+#define sh_atomic_add(__atomic, __value)	\
 	__sync_add_and_fetch(&(__atomic)->value, (__value))
 
-#define atomic_sub(__atomic, __value)	\
+#define sh_atomic_sub(__atomic, __value)	\
 	__sync_sub_and_fetch(&(__atomic)->value, (__value))
 
-#define atomic_inc(__atomic)				atomic_add(__atomic, 1)
-#define atomic_dec(__atomic)				atomic_sub(__atomic, 1)
+#define sh_atomic_inc(__atomic)				sh_atomic_add(__atomic, 1)
+#define sh_atomic_dec(__atomic)				sh_atomic_sub(__atomic, 1)
 
 /*
  * Compare and swap
@@ -48,7 +49,7 @@ typedef struct atomic  {
  * the comparison is successful and newval was
  * written.
  */
-#define atomic_cas(__atomic, __oldval, __newval)	\
+#define sh_atomic_cas(__atomic, __oldval, __newval)	\
 	__sync_bool_compare_and_swap(&(__atomic)->value, __oldval, __newval)
 
 

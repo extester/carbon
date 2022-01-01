@@ -27,39 +27,42 @@ class CApplication : public CModule, public CEventLoopThread, public CEventRecei
 	private:
 		CSignalServer		m_signalServer;
 		version_t			m_appVersion;
-		unsigned			m_appBuild;
+		unsigned int		m_appBuildNumb;
 		char				m_strAppPath[96];
 		int					m_nExitCode;
 
-		appender_handle_t	m_hPickupAppender;
+		//appender_handle_t	m_hPickupAppender;
 
 	protected:
 		int 				m_argc;
 		char**				m_argv;
 
 	public:
-		CApplication(const char* strName, version_t version, unsigned build = 1,
-					 	int argc = 0, char* argv[] = NULL);
+		CApplication(const char* strName, version_t version, unsigned int buildNumb = 1,
+					 	int argc = 0, char* argv[] = nullptr);
 		virtual ~CApplication();
 
 	public:
-		int getExitCode() const { return m_nExitCode; }
 		virtual version_t getVersion() const { return m_appVersion; }
+		unsigned int getBuildNumb() const { return m_appBuildNumb; }
+		const char* getBuildDate() const;
+
+		int getExitCode() const { return m_nExitCode; }
 		CEventLoop* getMainLoop() { return this; }
 		const char* getAppPath()  { return m_strAppPath; }
 
 		int run();
 		void stopApplication(int nResultCode);
 
-		result_t getLoggerBlock(void* pBuffer, size_t* pSize);
-		void loggerBlockDone(size_t size);
+		//result_t getLoggerBlock(void* pBuffer, size_t* pSize);
+		//void loggerBlockDone(size_t size);
 
 	protected:
 		virtual boolean_t processEvent(CEvent* pEvent);
 
 		virtual void initEvent();
 		virtual void initLogger();
-		void initLoggerPickupAppender(const char* strFile);
+		//void initLoggerPickupAppender(const char* strFile);
 
 		virtual void onEvQuit(int nExitCode) { setExitCode(nExitCode); m_signalServer.stop(); }
 		virtual void onEvHup() {}

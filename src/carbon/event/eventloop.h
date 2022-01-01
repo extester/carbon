@@ -61,7 +61,7 @@ class CEventLoop : public CObject
         void deleteEventAll();
 
         void insertTimer(CTimer* pTimer);
-        void restartTimer(CTimer* pTimer);
+        void restartTimer(CTimer* pTimer, hr_time_t hrNewPeriod);
         void pauseTimer(CTimer* pTimer);
         boolean_t unlinkTimer(CTimer* pTimer);
         void deleteTimer(CTimer* pTimer);

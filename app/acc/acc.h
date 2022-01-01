@@ -30,7 +30,7 @@
 #include "interface.h"
 
 #define ACC_NAME					"Carbon Center Client"
-#define ACC_VERSION					MAKE_VERSION(0,1)
+#define ACC_VERSION					MAKE_VERSION(0,0,1)
 
 #define EV_HB_ENABLE				(EV_USER+0)
 #define EV_HOST_INSERT				(EV_USER+1)

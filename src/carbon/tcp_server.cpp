@@ -31,7 +31,7 @@ CTcpServer::CTcpServer(const char* strName) :
 	m_servAddr(NETADDR_NULL)
 {
 	m_pSocket = new CSocketRef();
-	atomic_set(&m_nStop, 0);
+	sh_atomic_set(&m_nStop, 0);
 }
 
 CTcpServer::~CTcpServer()
@@ -47,7 +47,7 @@ result_t CTcpServer::run()
 	shell_assert(!m_pSocket->isOpen());
 
 	m_pSocket->close();
-	atomic_set(&m_nStop, 0);
+	sh_atomic_set(&m_nStop, 0);
 
 	if ( !isAddrLocal() ) {
 		/*

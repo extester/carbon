@@ -1,109 +1,114 @@
 /*
- *  Carbon/DB module
+ *  Telemetrica TeleGeo backend server
  *  SQL Database base class
  *
- *  Copyright (c) 2015 Softland. All rights reserved.
- *  Licensed under the Apache License, Version 2.0
+ *  Copyright (c) 2020 Telemetrica. All rights reserved.
  */
 /*
  *  Revision history:
  *
- *  Revision 1.0, 01.08.2015 19:41:12
+ *  Revision 1.0, 03.08.2020 12:00:38
  *      Initial revision.
  */
 
-#ifndef __CARBON_DB_SQL_H_INCLUDED__
-#define __CARBON_DB_SQL_H_INCLUDED__
+#ifndef __DB_SQL_H_INCLUDED__
+#define __DB_SQL_H_INCLUDED__
 
-#include <vector>
+#include <stdexcept>
 
-#include "db/db.h"
+#include "shell/shell.h"
+#include "shell/lock.h"
 
-/*
- * Supported SQL types
- */
-typedef enum {
-	SQL_VT_EMPTY,					/* Empty type */
-	SQL_VT_NULL,					/* Null type */
-	SQL_VT_INTEGER,					/* 64 bits */
-	SQL_VT_REAL,					/* 8 bytes */
-	SQL_VT_TEXT,					/* 2**31-1 */
-	SQL_VT_BLOB,					/* 2**31-1 */
-	SQL_VT_ERROR
-} SQL_VARIANT_TYPE;
-
-/*
- * SQL column variable
- */
-typedef struct {
-	SQL_VARIANT_TYPE	vtype;
-	uint32_t			vsize;
-
-	union {
-		uint64_t		valInt;
-		double			valDouble;
-		const char*		valText;
-		const void*		valBlob;
-	};
-} SQL_VARIANT;
+#include "carbon/module.h"
+#include "carbon/cstring.h"
+#include "carbon/utils.h"
 
 
-/*
- * Base class represents a temporary single row result
- */
-class CSqlResult
+namespace std {
+
+class sql_exception : public exception
 {
-	protected:
-		CSqlResult() {}
-	public:
-		virtual ~CSqlResult() {}
+	private:
+		result_t	m_nr;
 
 	public:
-		virtual size_t getComumns() const = 0;
-		virtual SQL_VARIANT operator[](int index) const = 0;
-		virtual result_t getNextRow() = 0;
+		sql_exception(result_t nr) throw() :
+			exception(), m_nr(nr) {}
+
+		virtual ~sql_exception() throw() {}
+
+	public:
+		virtual result_t getResult() const { return m_nr; }
+		virtual const char* what() const throw() { return ""; }
 };
 
+}; /* std */
 
 /*
- * Class contains a single SQL row
+ * Helper base class for SQL row iterations
  */
 class CSqlRow
 {
-	protected:
-		std::vector<SQL_VARIANT>		m_arComumn;
+	public:
+		CSqlRow() {}
+		virtual ~CSqlRow() {}
 
 	public:
-		CSqlRow();
-		virtual ~CSqlRow();
+		virtual char* operator[](size_t nIndex) noexcept(false) /*throw(std::exception)*/ = 0;
 
-	public:
-		size_t getComumns() const { return m_arComumn.size(); }
-		SQL_VARIANT operator[](int index) const;
-
-		result_t create(CSqlResult* pResult);
-
-	private:
-		void clear();
+		virtual uint32_t getUint32(size_t nIndex) noexcept(false) = 0;
+		virtual int32_t getInt32(size_t nIndex) noexcept(false) = 0;
+		virtual uint64_t getUint64(size_t nIndex) noexcept(false) = 0;
+		virtual int64_t getInt64(size_t nIndex) noexcept(false) = 0;
 };
 
+/*
+ * Base class represents a query result
+ */
+class CSqlResult
+{
+	public:
+		CSqlResult() {}
+		virtual ~CSqlResult() {}
 
-class CDbSql : public CDb
+	public:
+		virtual size_t getFields() const = 0;
+		virtual boolean_t getRow(CSqlRow* pRow) noexcept(false) = 0;
+		virtual void free() = 0;
+};
+
+/*******************************************************************************
+ * SQL Database base class
+ */
+class CDbSql : public CModule
 {
 	protected:
-		CDbSql(const char* strObject) : CDb(strObject) {}
-	public:
-		virtual ~CDbSql() {}
+		CMutex			m_lock;
+		hr_time_t 		m_hrConnectTimeout;
+		hr_time_t 		m_hrSendTimeout;
+		hr_time_t		m_hrRecvTimeout;
 
 	public:
-		virtual result_t connect() = 0;
-		virtual void disconnect() = 0;
+		CDbSql(const char* strName);
+		virtual ~CDbSql();
 
-		virtual result_t query(const char* strQuery, CSqlResult** ppResult) = 0;
-		virtual void escape(const char* strInput, char* strOutput, size_t szOutput) = 0;
+	public:
+		virtual void setConnectTimeout(hr_time_t hrTimeout);
+		virtual void setTimeouts(hr_time_t hrSendTimeout = HR_0, hr_time_t hrRecvTimeout = HR_0);
 
-		virtual result_t iterateNext(CSqlResult* pResult);
-		virtual void iterateEnd(CSqlResult* pResult);
+		virtual boolean_t isConnected() const = 0;
+		virtual result_t query(const char* strQuery) = 0;
+
+		virtual result_t queryValue(const char* strQuery, CString* pValue) = 0;
+		virtual result_t queryValue(const char* strQuery, uint64_t* pValue) = 0;
+		virtual result_t queryValue(const char* strQuery, int64_t* pValue) = 0;
+		virtual result_t queryValue(const char* strQuery, uint32_t* pValue) = 0;
+		virtual result_t queryValue(const char* strQuery, int32_t* pValue) = 0;
+		virtual result_t queryRow(const char* strQuery, str_vector_t* pVector) = 0;
+		virtual void iterate(const char* strQuery, CSqlResult* pResult) noexcept(false) = 0;
+
+	public:
+		virtual void dump(const char* strPref = "") const = 0;
 };
 
-#endif /* __CARBON_DB_SQL_H_INCLUDED__ */
+#endif /* __DB_SQL_H_INCLUDED__ */

@@ -160,25 +160,44 @@ uint16_t crc16(const void* pData, size_t nSize)
 }
 
 /*
- * Parse version string "M.N" from string representation
+ * Parse version string "xx.yy.zz" from string representation
  *
  *      strVer          version string
  *      pVersion        binary version [out]
  *
  * Return: ESUCCESS, EINVAL
  */
-result_t parseVersion(const char* strVer, version_t* pVersion)
+result_t parseVersion(const char* strVersion, version_t* pVersion)
 {
-    int         major, minor, n;
-    result_t    nresult = EINVAL;
+    unsigned int    major, minor, patch, n;
+    result_t    	nresult = EINVAL;
 
-    n = _tsscanf(strVer, "%d.%d", &major, &minor);
-    if ( n == 2 )  {
-        *pVersion = MAKE_VERSION(major, minor);
+    n = _tsscanf(strVersion, "%u.%u.%u", &major, &minor, &patch);
+    if ( n == 3 && major < 256 && minor < 256 && patch < 256 )  {
+		if ( pVersion != nullptr ) {
+			*pVersion = MAKE_VERSION(major, minor, patch);
+		}
         nresult = ESUCCESS;
     }
 
     return nresult;
+}
+
+/*
+ * Format version into the string representation
+ *
+ * 		nVersion		version to format
+ * 		strVersion		string buffer [out]
+ * 		nLength			string buffer length
+ *
+ * Return:
+ * 		strVersion address
+ */
+const char* formatVersion(version_t nVersion, char* strVersion, size_t nLength)
+{
+	_tsnprintf(strVersion, nLength, "%u.%u.%u", VERSION_MAJOR(nVersion),
+			   	VERSION_MINOR(nVersion), VERSION_PATCH(nVersion));
+	return strVersion;
 }
 
 /*

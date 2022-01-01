@@ -43,7 +43,7 @@ void carbon_init()
     shell_assert(nresult == ESUCCESS); shell_unused(nresult);
 
     /* Initialise logger including STDOUT appender, all levels/channels are enabled */
-    logger_init(TRUE);
+    /*logger_init(TRUE);*/
     logger_enable(LT_ALL|L_ALL);
 }
 
@@ -58,7 +58,7 @@ void carbon_terminate()
     }
     SAFE_DELETE(g_pMemoryManager);
 
-    logger_terminate();
+    /*logger_terminate();*/
 }
 
 result_t appSendRemoteEvent(CRemoteEvent* pEvent, const char* ridDest,

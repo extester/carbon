@@ -27,7 +27,7 @@
  *      argv        command line argument 'argv'
  */
 CThreadApp::CThreadApp(int argc, char* argv[]) :
-    CApplication("Thread Application", MAKE_VERSION(1,0), 1, argc, argv),
+    CApplication("Thread Application", MAKE_VERSION(1,0,0), 1, argc, argv),
     m_thWorker("worker")
 {
 }

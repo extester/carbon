@@ -34,7 +34,7 @@
  *      argv        command line argument 'argv'
  */
 CShellExecuteApp::CShellExecuteApp(int argc, char* argv[]) :
-    CApplication("Shell execute Application", MAKE_VERSION(1,0), 1, argc, argv),
+    CApplication("Shell execute Application", MAKE_VERSION(1,0,0), 1, argc, argv),
     m_sessId(NO_SEQNUM)
 {
 }

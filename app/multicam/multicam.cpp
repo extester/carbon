@@ -88,7 +88,7 @@ camera_t CMultiCamApp::m_arCamera[] = {
  *      argv        command line argument 'argv'
  */
 CMultiCamApp::CMultiCamApp(int argc, char* argv[]) :
-    CApplication("IP MultiCamera Test", MAKE_VERSION(1,0), 1, argc, argv),
+    CApplication("IP MultiCamera Test", MAKE_VERSION(1,0,0), 1, argc, argv),
 	IRtpVideoH264Result(),
 	m_bmpCamera(0),
 	m_bmpStop(0),

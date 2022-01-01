@@ -40,7 +40,7 @@
  *      argv        command line argument 'argv'
  */
 CNetClientApp::CNetClientApp(int argc, char* argv[]) :
-    CApplication("Net Client Synchronous Application", MAKE_VERSION(1,0), 1, argc, argv),
+    CApplication("Net Client Synchronous Application", MAKE_VERSION(1,0,0), 1, argc, argv),
     m_netClient(this),
     m_pTimer(0)
 {

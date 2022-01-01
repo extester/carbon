@@ -25,7 +25,7 @@
  *      argv        command line argument 'argv'
  */
 CNetServerApp::CNetServerApp(int argc, char* argv[]) :
-    CApplication("Net Server Synchronous Application", MAKE_VERSION(1,0), 1, argc, argv),
+    CApplication("Net Server Synchronous Application", MAKE_VERSION(1,0,0), 1, argc, argv),
     m_netServer(1/*single client*/, new CVepContainer, this),
     m_hConnection(0)
 {

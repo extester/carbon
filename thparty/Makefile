@@ -32,7 +32,7 @@ THPARTY_DEP := $(sort $(THPARTY_DEP))
 
 # jemalloc-4.1.0 pugixml-1.6 sqlite-3081101 udns-0.4 jansson-2.7 mp4v2-2.0.0
 
-_DIRS_ALL := jemalloc pugixml sqlite udns jansson mp4v2 zlib
+_DIRS_ALL := jemalloc pugixml sqlite udns jansson mp4v2 zlib date
 
 ifeq ($(MAKECMDGOALS), cleanall)
 DIRS := $(_DIRS_ALL)

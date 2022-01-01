@@ -48,25 +48,25 @@ void CMemoryManager::getStat(void* pBuffer, size_t nSize) const
 
 void CMemoryManager::resetStat()
 {
-	atomic_set(&g_stat.full_alloc_count, 0);
-	atomic_set(&g_stat.free_count, 0);
-	atomic_set(&g_stat.alloc_count, 0);
-	atomic_set(&g_stat.alloc_size, 0);
-	atomic_set(&g_stat.alloc_size_max, 0);
-	atomic_set(&g_stat.realloc_count, 0);
-	atomic_set(&g_stat.fail_count, 0);
+	sh_atomic_set(&g_stat.full_alloc_count, 0);
+	sh_atomic_set(&g_stat.free_count, 0);
+	sh_atomic_set(&g_stat.alloc_count, 0);
+	sh_atomic_set(&g_stat.alloc_size, 0);
+	sh_atomic_set(&g_stat.alloc_size_max, 0);
+	sh_atomic_set(&g_stat.realloc_count, 0);
+	sh_atomic_set(&g_stat.fail_count, 0);
 }
 
 void CMemoryManager::dump(const char* strPref) const
 {
 	log_dump("%s*** MemoryManager statistic:\n", strPref);
-	log_dump("     allocs:                  %u\n", atomic_get(&g_stat.full_alloc_count));
-	log_dump("     freeds:                  %u\n", atomic_get(&g_stat.free_count));
-	log_dump("     reallocs:                %u\n", atomic_get(&g_stat.realloc_count));
-	log_dump("     failed:                  %u\n", atomic_get(&g_stat.fail_count));
-	log_dump("     allocated:               %u\n", atomic_get(&g_stat.alloc_count));
-	log_dump("     allocated size:          %u\n", atomic_get(&g_stat.alloc_size));
-	log_dump("     max allocated size:      %u\n", atomic_get(&g_stat.alloc_size_max));
+	log_dump("     allocs:                  %u\n", sh_atomic_get(&g_stat.full_alloc_count));
+	log_dump("     freeds:                  %u\n", sh_atomic_get(&g_stat.free_count));
+	log_dump("     reallocs:                %u\n", sh_atomic_get(&g_stat.realloc_count));
+	log_dump("     failed:                  %u\n", sh_atomic_get(&g_stat.fail_count));
+	log_dump("     allocated:               %u\n", sh_atomic_get(&g_stat.alloc_count));
+	log_dump("     allocated size:          %u\n", sh_atomic_get(&g_stat.alloc_size));
+	log_dump("     max allocated size:      %u\n", sh_atomic_get(&g_stat.alloc_size_max));
 }
 
 #if CARBON_MALLOC
@@ -77,9 +77,9 @@ static void update_max_value(size_t nSize)
 	int 		i = 20;
 
 	do {
-		nOldSize = (size_t)atomic_get(&g_stat.alloc_size_max);
+		nOldSize = (size_t)sh_atomic_get(&g_stat.alloc_size_max);
 	} while ( nOldSize < nSize &&
-			  !atomic_cas(&g_stat.alloc_size_max, nOldSize, nSize)
+			  !sh_atomic_cas(&g_stat.alloc_size_max, nOldSize, nSize)
 			  && i-- > 0);
 }
 
@@ -87,31 +87,31 @@ static void stat_alloc(size_t nSize)
 {
 	size_t nCurSize;
 
-	atomic_inc(&g_stat.full_alloc_count);
-	atomic_inc(&g_stat.alloc_count);
-	nCurSize = atomic_add(&g_stat.alloc_size, nSize);
+	sh_atomic_inc(&g_stat.full_alloc_count);
+	sh_atomic_inc(&g_stat.alloc_count);
+	nCurSize = sh_atomic_add(&g_stat.alloc_size, nSize);
 	update_max_value(nCurSize);
 }
 
 static void stat_free(size_t nSize)
 {
-	atomic_inc(&g_stat.free_count);
-	atomic_dec(&g_stat.alloc_count);
-	atomic_sub(&g_stat.alloc_size, nSize);
+	sh_atomic_inc(&g_stat.free_count);
+	sh_atomic_dec(&g_stat.alloc_count);
+	sh_atomic_sub(&g_stat.alloc_size, nSize);
 }
 
 static void stat_realloc(ssize_t nDelta)
 {
 	size_t nCurSize;
 
-	atomic_inc(&g_stat.realloc_count);
-	nCurSize = atomic_add(&g_stat.alloc_size, nDelta);
+	sh_atomic_inc(&g_stat.realloc_count);
+	nCurSize = sh_atomic_add(&g_stat.alloc_size, nDelta);
 	update_max_value(nCurSize);
 }
 
 static void stat_failed()
 {
-	atomic_inc(&g_stat.fail_count);
+	sh_atomic_inc(&g_stat.fail_count);
 }
 
 #define EXT_SZ				(sizeof(extp_t))
@@ -127,7 +127,7 @@ typedef struct {
 	size_t		size;
 	void*		ptr;
 #if CARBON_DEBUG_ASSERT
-	natural_t 	red2;
+	unatural_t 	red2;
 #endif /* CARBON_DEBUG_ASSERT */
 } __attribute__ ((packed)) extp_t;
 
@@ -268,8 +268,8 @@ void free(void* ptr) throw()
 	if ( ptr )  {
 		extp = TO_EXT(ptr);
 #if CARBON_DEBUG_ASSERT
-		shell_assert_ex(extp->red1 == EXT_RED1, "free(): red1 is corrupt");
-		shell_assert_ex(extp->red2 == EXT_RED2, "free(): red2 is corrupt");
+		shell_assert_ex(extp->red1 == EXT_RED1, "free(): red1 is corrupt\n");
+		shell_assert_ex(extp->red2 == EXT_RED2, "free(): red2 is corrupt\n");
 #endif /* CARBON_DEBUG_ASSERT */
 
 		nSize = extp->size;

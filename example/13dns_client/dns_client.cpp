@@ -48,7 +48,7 @@ static CNetHost 	g_dns1;
  *      argv        command line argument 'argv'
  */
 CDnsResolveApp::CDnsResolveApp(int argc, char* argv[]) :
-    CApplication("DNS Resolve Application", MAKE_VERSION(1,0), 1, argc, argv),
+    CApplication("DNS Resolve Application", MAKE_VERSION(1,0,0), 1, argc, argv),
     m_client(this),
     m_nIndex(0)
 {

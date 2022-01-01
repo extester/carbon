@@ -140,7 +140,7 @@ result_t CNetServer::processClient(CSocketRef* pSocket)
         }
     }
     else {
-        log_debug(L_NETSERV, "[netserv] too many clients, client dropped\n");
+        log_debug(L_NETSERV, "[netserv] too many clients (%lu), client dropped\n", count);
         statClientFail();
     }
 

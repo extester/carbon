@@ -51,18 +51,20 @@ typedef int32_t			result_t;
 #endif /* NULL */
 
 /*
- * Version format: major.minor, date type is SHORT (16 bits):
+ * Version format: major.minor.patch, date type is 32-bit unsigned:
  *
- * 	      major    minor
- * 		-------------------
- * 		|yyyyyyyy|xxxxxxxx|
- * 		-------------------
+ * 	                 major    minor    patch
+ * 		-------------------------------------
+ * 		|00000000|xxxxxxxx|yyyyyyyy|zzzzzzzz|
+ * 		-------------------------------------
  */
-#define MAKE_VERSION(___major, ___minor) ((version_t)( ((___minor)&0xff) | (((___major)&0xff)<<8) ))
+#define MAKE_VERSION(__major, __minor, __patch) 	\
+	((version_t)( ((__patch)&0xff) | (((__minor)&0xff)<<8) | (((__major)&0xff)<<16) ))
 
-#define VERSION_MINOR(___version)		((___version)&0xff)
-#define VERSION_MAJOR(___version)		(((___version)>>8)&0xff)
+#define VERSION_PATCH(__version)		((__version)&0xff)
+#define VERSION_MINOR(__version)		(((__version)>>8)&0xff)
+#define VERSION_MAJOR(__version)		(((__version)>>16)&0xff)
 
-typedef uint16_t    version_t;
+typedef uint32_t    version_t;
 
 #endif /* __SHELL_TYPES_H_INCLUDED__ */

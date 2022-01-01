@@ -262,7 +262,7 @@ result_t CSocketAsync::open(const CNetAddr& bindAddr, socket_type_t sockType)
 	/*
 	 * Bind socket source address
 	 */
-	if ( bindAddr != NETADDR_NULL )  {
+	if ( bindAddr.isValid() )  {
 		struct sockaddr_in  sockaddr_tmp;
 
 		log_trace(L_SOCKET, "[socket] binding socket to %s\n", bindAddr.cs());
@@ -275,8 +275,8 @@ result_t CSocketAsync::open(const CNetAddr& bindAddr, socket_type_t sockType)
 		retVal = ::bind(fd, (struct sockaddr*)&sockaddr_tmp, sizeof(sockaddr_tmp));
 		if ( retVal < 0 ) {
 			nresult = errno;
-			log_error(L_SOCKET, "[socket] can't bind socket to %s, result: %d\n",
-					  bindAddr.cs(), nresult);
+			log_error(L_SOCKET, "[socket] can't bind socket to %s, result: %d (%s)\n",
+					  bindAddr.cs(), nresult, strerror(nresult));
 			::close(fd);
 			return nresult;
 		}
@@ -360,7 +360,7 @@ result_t CSocketAsync::open(const char* strBindSocket, socket_type_t sockType)
  * 		bindAddr		local address to bind to, optional, may be NETHOST_NULL
  * 		sockType		socket type, SOCKET_TYPE_xxx
  *
- * Return: ESUCCESS, ...
+ * Return: ESUCCESS, EINPROGRESS, ...
  */
 result_t CSocketAsync::connectAsync(const CNetAddr& dstAddr, const CNetAddr& bindAddr,
 							   socket_type_t sockType)
@@ -419,7 +419,7 @@ result_t CSocketAsync::connectAsync(const CNetAddr& dstAddr, const CNetAddr& bin
  * 		strBindSocket	full filename of the socket to bind to, optional, may be NULL
  * 		sockType		destination socket type, SOCKET_TYPE_xxx
  *
- * Return: ESUCCESS, ...
+ * Return: ESUCCESS, EINPROGRESS, ...
  */
 result_t CSocketAsync::connectAsync(const char* strDstSocket, const char* strBindSocket,
 							   	socket_type_t sockType)
@@ -680,7 +680,7 @@ result_t CSocketAsync::receiveLineAsync(void* pBuffer, size_t nPreSize, size_t* 
 
 	log_trace(L_SOCKET, "[socket] receiving, presize %d, size %d\n", nPreSize, *pSize);
 
-	while( length < size )  {
+	while ( length < size )  {
 		len = ::recv(m_hSocket, p+length, 1, MSG_NOSIGNAL);
 
 		if ( len < 0 )  {
@@ -1022,7 +1022,7 @@ result_t CSocket::receiveLine(void* pBuffer, size_t* pSize, const char* strEol,
 							  hr_time_t hrTimeout)
 {
 	uint8_t*		pBuf = (uint8_t*)pBuffer;
-	size_t			lenEol, length, szPre, size;
+	size_t			lenEol, length, szPre, size, size1;
 	result_t		nresult;
 	hr_time_t		hrStart;
 	short			revents;
@@ -1031,26 +1031,29 @@ result_t CSocket::receiveLine(void* pBuffer, size_t* pSize, const char* strEol,
 		return EBADF;
 	}
 
-	if ( (*pSize) < 2 )  {
-		if ( (*pSize) > 0 )  {
+	size = *pSize;
+
+	if ( size < 2 )  {
+		if ( size > 0 )  {
 			*((char*)pBuffer) = '\0';
 		}
 		*pSize = 0;
 		return ESUCCESS;
 	}
 
+	--size;
 	length = 0;
 	lenEol = _tstrlen(strEol);
 	hrStart = hr_time_now();
-	nresult = (*pSize) ? EAGAIN : ESUCCESS;
+	nresult = EAGAIN;
 
-	while ( *pSize > length && nresult == EAGAIN )  {
+	while ( size > length && nresult == EAGAIN )  {
 		nresult = select(hr_timeout(hrStart, hrTimeout), pollRead, &revents);
 		if ( nresult == ESUCCESS )  {
 			szPre = sh_min(length, lenEol);
-			size = (*pSize) - length;
-			nresult = receiveLineAsync(pBuf+length-szPre, szPre, &size, strEol);
-			length += size;
+			size1 = size - length;
+			nresult = receiveLineAsync(pBuf+length-szPre, szPre, &size1, strEol);
+			length += size1;
 		}
 	}
 

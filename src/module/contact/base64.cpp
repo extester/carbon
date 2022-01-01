@@ -23,8 +23,6 @@
  * Base64 Encode
  */
 
-const int CHARS_PER_LINE = 72;
-
 static void base64_init_encodestate(base64_encodestate* state_in)
 {
 	state_in->step = step_A;
@@ -40,7 +38,8 @@ static signed char base64_encode_value(signed char value_in)
 }
 
 
-static int base64_encode_block(const signed char* plaintext_in, int length_in, signed char* code_out, base64_encodestate* state_in)
+static int base64_encode_block(const signed char* plaintext_in, int length_in, signed char* code_out,
+							   base64_encodestate* state_in, int nCharsPerLine)
 {
 	const signed char* plainchar = plaintext_in;
 	const signed char* const plaintextend = plaintext_in + length_in;
@@ -90,7 +89,7 @@ static int base64_encode_block(const signed char* plaintext_in, int length_in, s
 			*codechar++ = base64_encode_value(result);
 
 			++(state_in->stepcount);
-			if (state_in->stepcount == CHARS_PER_LINE/4)
+			if (state_in->stepcount == nCharsPerLine/4)
 			{
 				*codechar++ = '\n';
 				state_in->stepcount = 0;
@@ -242,7 +241,7 @@ result_t CBase64::encode(const void* pRaw, size_t length)
 		m_size = 0;
 
 		m_size = (size_t)base64_encode_block((const signed char*)pRaw, (int)length, p,
-											 &m_stateEncode);
+											 &m_stateEncode, m_nCharsPerLine);
 		m_size += base64_encode_blockend(&m_pBuffer[m_size], &m_stateEncode);
 		m_pBuffer[m_size] = '\0';
 		nresult = ESUCCESS;
