@@ -41,6 +41,7 @@ class CDbMySql : public CDbSql
 		MYSQL*			m_pHandle;				/* Mysql connection handle */
 		int				m_nAutoReconnect;		/* 0 - do not use autoreconnect,
  												 * n - use n tries */
+		boolean_t		m_bMultiStmt;			/* true: multiple-statement enabled, false: disabled */
 
 		atomic_t 		m_nResultCount;			/* Debugging: calculating result/free ops */
 
@@ -62,9 +63,14 @@ class CDbMySql : public CDbSql
 
 		static result_t initThread();
 		static void terminateThread();
+		static const char* getClientVersion();
 
 	public:
 		void setAutoReconnect(int nAutoReconnect);
+
+		boolean_t getEnableMultiStatement() const { return m_bMultiStmt; }
+		result_t enableMultiStatement(boolean_t bEnable);
+		result_t flushMultiStatementResult();
 
 		virtual result_t connect();
 		virtual result_t disconnect();

@@ -32,8 +32,8 @@ class CStateMachine
         }
         virtual ~CStateMachine() {}
 
-        void setFsmState(fsm_t state)  { sh_atomic_set(&m_state, state); }
-        fsm_t getFsmState() const { return (fsm_t)sh_atomic_get(&m_state); }
+        virtual void setFsmState(fsm_t state)  { sh_atomic_set(&m_state, state); }
+        virtual fsm_t getFsmState() const { return (fsm_t)sh_atomic_get(&m_state); }
 };
 
 #endif /* __CARBON_FSM_H_INCLUDED__ */

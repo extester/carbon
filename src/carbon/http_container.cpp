@@ -452,42 +452,47 @@ result_t CHttpContainer::send(CSocket& socket, hr_time_t hrTimeout, const CNetAd
  */
 int CHttpContainer::getContentLength() const
 {
-	const char	*strStart = m_strStart, *s;
+	const char	*s;
 	CString 	strContentLength;
-	int 		code, nSize = -1, n;
-	result_t	nr;
-
-
-	if ( !strStart )  {
-		return -1;
-	}
-
-	s = strStart;
-	SKIP_NON_CHARS(s, " \t");
-	SKIP_CHARS(s, " \t");
-
-	code = _tatoi(s);
-	if ( code == 204 || code == 304 || (code/100) == 1 )  {
-		/*
-		 * Assume no body for response codes
-		 * 	204, 304, 1xx
-		 */
-		return 0;
-	}
+	int 		code, nLength = -1, n;
+	result_t	nresult;
 
 	if ( getHeader(strContentLength, HTTP_CONTENT_LENGTH) )  {
-		nr = strContentLength.getNumber(n);
-		if ( nr == ESUCCESS )  {
-			nSize = n;
+		nresult = strContentLength.getNumber(n);
+		if ( nresult == ESUCCESS )  {
+			return n;
 		}
 	}
-	else {
-		nSize = -1;
+
+	if ( !m_strStart.isEmpty() )  {
+		s = m_strStart;
+
+		SKIP_CHARS(s, " \t");
+		if ( _tstrlen(s) > 5 && _tmemcmp(s, "HTTP/", 5) == 0 )  {
+			/*
+			 * This is response and no context-length header
+			 */
+			SKIP_NON_CHARS(s, " \t");
+			SKIP_CHARS(s, " \t");
+
+			code = _tatoi(s);
+			if ( code == 204 || code == 304 || (code/100) == 1 )  {
+				/*
+				 * Assume no body for response codes
+				 * 	204, 304, 1xx
+				 */
+				nLength = 0;
+			}
+		}
+		else {
+			/*
+			 * This is request and no context-length header
+			 */
+		}
 	}
 
-	return nSize;
+	return nLength;
 }
-
 
 result_t CHttpContainer::receive(CSocket& socket, hr_time_t hrTimeout, CNetAddr* pSrcAddr)
 {
@@ -588,7 +593,11 @@ result_t CHttpContainer::receive(CSocket& socket, hr_time_t hrTimeout, CNetAddr*
 						bDone = TRUE;
 					}
 					else {
-						length = sizeof(strBuf);
+						/* It seems no body */
+						nresult = ESUCCESS;
+						bDone = TRUE;
+
+						/*length = sizeof(strBuf);
 						nresult = socket.receive(strBuf, &length, 0, hr_timeout(hrNow, hrTimeout));
 						if ( nresult == ESUCCESS )  {
 							appendBody(strBuf, length);
@@ -599,7 +608,7 @@ result_t CHttpContainer::receive(CSocket& socket, hr_time_t hrTimeout, CNetAddr*
 							}
 							nresult = ESUCCESS;
 							bDone = TRUE;
-						}
+						}*/
 					}
 				}
 				break;

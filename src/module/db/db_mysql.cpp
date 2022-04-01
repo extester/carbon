@@ -160,6 +160,11 @@ void CDbMySql::terminateThread()
 	}
 }
 
+const char* CDbMySql::getClientVersion()
+{
+	return ::mysql_get_client_info();
+}
+
 /*
  * Convert MySQL result code to Carbon result code
  *
@@ -174,6 +179,7 @@ result_t errMySql2Nr(unsigned int nErr)
 	switch ( nErr ) {
 		case ER_DUP_ENTRY:					nresult = EEXIST; break;
 		case CR_OUT_OF_MEMORY:				nresult = ENOMEM; break;
+		case ER_NO_SUCH_TABLE:				nresult = ENOENT; break;
 		default:							nresult = EIO; break;
 	}
 
@@ -201,6 +207,7 @@ CDbMySql::CDbMySql(const CNetAddr& server, const char* strUser, const char* strP
 	m_strDb(strDb),
 	m_pHandle(nullptr),
 	m_nAutoReconnect(MYSQL_AUTORECONNECT_DEFAULT),
+	m_bMultiStmt(false),
 	m_nResultCount(ZERO_ATOMIC)
 {
 }
@@ -216,6 +223,7 @@ CDbMySql::CDbMySql(const CNetAddr& server, const char* strUser, const char* strP
 	m_strDb(strDb),
 	m_pHandle(nullptr),
 	m_nAutoReconnect(MYSQL_AUTORECONNECT_DEFAULT),
+	m_bMultiStmt(false),
 	m_nResultCount(ZERO_ATOMIC)
 {
 }
@@ -259,6 +267,7 @@ result_t CDbMySql::doConnect()
 	CString			strQuery;
 	const char*		strErr;
 	unsigned int	nErr, timeout;
+	unsigned long	clientFlag;
 	int				nr;
 	result_t		nresult;
 
@@ -287,7 +296,7 @@ result_t CDbMySql::doConnect()
 			timeout = 1;
 		}
 
-		nr = mysql_optionsv(pHandle, MYSQL_OPT_CONNECT_TIMEOUT, (void*)&timeout);
+		nr = mysql_options(pHandle, MYSQL_OPT_CONNECT_TIMEOUT, (void*)&timeout);
 		if ( nr != 0 )  {
 			strErr = ::mysql_error(pHandle);
 			nErr = ::mysql_errno(pHandle);
@@ -310,7 +319,7 @@ result_t CDbMySql::doConnect()
 			timeout = 1;
 		}
 
-		nr = mysql_optionsv(pHandle, MYSQL_OPT_WRITE_TIMEOUT, (void*)&timeout);
+		nr = mysql_options(pHandle, MYSQL_OPT_WRITE_TIMEOUT, (void*)&timeout);
 		if ( nr != 0 )  {
 			strErr = ::mysql_error(pHandle);
 			nErr = ::mysql_errno(pHandle);
@@ -345,9 +354,11 @@ result_t CDbMySql::doConnect()
 		}
 	}
 
+	clientFlag = m_bMultiStmt ? CLIENT_MULTI_STATEMENTS : 0;
+
 	pH = ::mysql_real_connect(pHandle, m_server.getHost(),
 				m_strUser.cs(), m_strPass.cs(), m_strDb.isEmpty() ? nullptr : m_strDb.cs(),
-				m_server.getPort(), nullptr, 0);
+				m_server.getPort(), nullptr,clientFlag);
 
 	if ( !pH )  {
 		strErr = ::mysql_error(pHandle);
@@ -413,15 +424,96 @@ void CDbMySql::doDisconnect()
 }
 
 /*
+ * Enable/disable multi-statement execution
+ *
+ * Return:
+ * 		ESUCCESS		success
+ * 		EIO				failed
+ * 		ENOMEM			out of memory error
+ */
+result_t CDbMySql::enableMultiStatement(boolean_t bEnable)
+{
+	int 		retVal;
+	result_t	nresult = ESUCCESS;
+
+	if ( m_bMultiStmt == bEnable )  {
+		return ESUCCESS;
+	}
+
+	if ( !isConnected() )  {
+		m_bMultiStmt = bEnable;
+		return ESUCCESS;
+	}
+
+	retVal = mysql_set_server_option(m_pHandle, bEnable ?
+					MYSQL_OPTION_MULTI_STATEMENTS_ON :
+					MYSQL_OPTION_MULTI_STATEMENTS_OFF);
+	if ( retVal == 0 )  {
+		m_bMultiStmt = bEnable;
+		log_trace(L_SQL, "[mysql] multiple statement is %s\n", bEnable ? "enabled" : "disabled");
+	}
+	else {
+		const char*		strErr = ::mysql_error(m_pHandle);
+		unsigned int	nErr = ::mysql_errno(m_pHandle);
+
+		if ( nErr == CR_SERVER_GONE_ERROR || nErr == CR_SERVER_LOST ) {
+			log_error(L_SQL, "[mysql] %s multiple statement failed, connection failure, "
+								"mysql error %d (%s), will repeat on the next connect attempt\n",
+					  			bEnable ? "enable" : "disable", nErr, strErr);
+
+			doDisconnect();
+		}
+		else {
+			log_error(L_SQL, "[mysql] %s multiple statement failed, mysql error %d (%s)\n",
+					  		bEnable ? "enable" : "disable", nErr, strErr);
+			nresult = EIO;
+		}
+	}
+
+	return nresult;
+}
+
+result_t CDbMySql::flushMultiStatementResult()
+{
+	MYSQL_RES*		pMysqlResult;
+	result_t		nresult = ESUCCESS;
+	int 			retVal;
+
+	if ( isConnected() )  {
+		do {
+			pMysqlResult = mysql_store_result(m_pHandle);
+			if ( pMysqlResult != nullptr )  {
+				mysql_free_result(pMysqlResult);
+			}
+
+			retVal = mysql_next_result(m_pHandle);
+			if ( retVal > 0 )  {
+				const char*		strErr = ::mysql_error(m_pHandle);
+				unsigned int	nErr = ::mysql_errno(m_pHandle);
+
+				log_error(L_SQL, "[mysql] getting next result failure, mysql error %d (%s)\n",
+						  				nErr, strErr);
+				nresult = EIO;
+				break;
+			}
+
+		} while ( retVal == 0 );
+	}
+
+	return nresult;
+}
+
+/*
  * Execute a query
  *
  * 		strQuery		query to execute
  *
  * Return:
  * 		ESUCCESS		query executed
- * 		EIO				query failed
+ * 		EEXIST			query failed (duplicate key, etc)
+ * 		ENOENT			query failed (no such table, etc)
+ * 		EIO				query failed (I/O error)
  * 		ENOMEM			out of memory
- * 		EEXISTS			query failed, duplicate key(s)
  *
  * Note: Function do connect and reconnect as necessary.
  * Note: Mutual lock must be held
@@ -538,9 +630,10 @@ result_t CDbMySql::disconnect()
  *
  * Return:
  * 		ESUCCESS		query executed
- * 		EIO				query failed
+ * 		EEXIST			query failed (duplicate key, etc)
+ * 		ENOENT			query failed (no such table, etc)
+ * 		EIO				query failed (I/O error)
  * 		ENOMEM			out of memory
- * 		EEXIST			query failed, duplicate key(s)
  *
  * Note: No exception raised.
  */
@@ -564,10 +657,10 @@ result_t CDbMySql::query(const char* strQuery)
  * Return:
  * 		ESUCCESS		success
  * 		ENODATA			query executed but returns no data
- * 		EIO				query failed
+ * 		EEXIST			query failed (duplicate key, etc)
+ * 		ENOENT			query failed (no such table, etc)
+ * 		EIO				query failed (I/O error)
  * 		ENOMEM			out of memory
- *
- * Note: No exception raised.
  */
 result_t CDbMySql::queryValue(const char* strQuery, CString* pValue)
 {
@@ -631,13 +724,24 @@ result_t CDbMySql::queryValue(const char* strQuery, CString* pValue)
 							 "mysql error %d (%s)\n", strQuery, nErr, strErr);
 		}
 	}
-	else {
-		if ( nresult == EEXIST ) nresult = EIO;
-	}
 
 	return nresult;
 }
 
+/*
+ * Execute a given SQL query and fetch a UINT64 value from the result
+ *
+ * 		strQuery		SQL query to execute
+ * 		pValue			fetched string [out]
+ *
+ * Return:
+ * 		ESUCCESS		success
+ * 		ENODATA			query executed but returns no data
+ * 		EEXIST			query failed (duplicate key, etc)
+ * 		ENOENT			query failed (no such table, etc)
+ * 		EIO				query failed (I/O error)
+ * 		ENOMEM			out of memory
+ */
 result_t CDbMySql::queryValue(const char* strQuery, uint64_t* pValue)
 {
 	CString		strValue;
@@ -659,6 +763,20 @@ result_t CDbMySql::queryValue(const char* strQuery, uint64_t* pValue)
 	return nresult;
 }
 
+/*
+ * Execute a given SQL query and fetch a INT64 value from the result
+ *
+ * 		strQuery		SQL query to execute
+ * 		pValue			fetched string [out]
+ *
+ * Return:
+ * 		ESUCCESS		success
+ * 		ENODATA			query executed but returns no data
+ * 		EEXIST			query failed (duplicate key, etc)
+ * 		ENOENT			query failed (no such table, etc)
+ * 		EIO				query failed (I/O error)
+ * 		ENOMEM			out of memory
+ */
 result_t CDbMySql::queryValue(const char* strQuery, int64_t* pValue)
 {
 	CString		strValue;
@@ -680,6 +798,20 @@ result_t CDbMySql::queryValue(const char* strQuery, int64_t* pValue)
 	return nresult;
 }
 
+/*
+ * Execute a given SQL query and fetch a UINT32 value from the result
+ *
+ * 		strQuery		SQL query to execute
+ * 		pValue			fetched string [out]
+ *
+ * Return:
+ * 		ESUCCESS		success
+ * 		ENODATA			query executed but returns no data
+ * 		EEXIST			query failed (duplicate key, etc)
+ * 		ENOENT			query failed (no such table, etc)
+ * 		EIO				query failed (I/O error)
+ * 		ENOMEM			out of memory
+ */
 result_t CDbMySql::queryValue(const char* strQuery, uint32_t* pValue)
 {
 	CString		strValue;
@@ -701,6 +833,20 @@ result_t CDbMySql::queryValue(const char* strQuery, uint32_t* pValue)
 	return nresult;
 }
 
+/*
+ * Execute a given SQL query and fetch a INT32 value from the result
+ *
+ * 		strQuery		SQL query to execute
+ * 		pValue			fetched string [out]
+ *
+ * Return:
+ * 		ESUCCESS		success
+ * 		ENODATA			query executed but returns no data
+ * 		EEXIST			query failed (duplicate key, etc)
+ * 		ENOENT			query failed (no such table, etc)
+ * 		EIO				query failed (I/O error)
+ * 		ENOMEM			out of memory
+ */
 result_t CDbMySql::queryValue(const char* strQuery, int32_t* pValue)
 {
 	CString		strValue;
@@ -731,8 +877,12 @@ result_t CDbMySql::queryValue(const char* strQuery, int32_t* pValue)
  * Return:
  * 		ESUCCESS		success
  * 		ENODATA			query executed but returns no data
- * 		EIO				query failed
+ * 		EEXIST			query failed (duplicate key, etc)
+ * 		ENOENT			query failed (no such table, etc)
+ * 		EIO				query failed (I/O error)
  * 		ENOMEM			out of memory
+ *
+ * Note: NULL fields are returned as empty string ("")
  */
 result_t CDbMySql::queryRow(const char* strQuery, str_vector_t* pVector)
 {
@@ -749,7 +899,7 @@ result_t CDbMySql::queryRow(const char* strQuery, str_vector_t* pVector)
 		MYSQL_ROW		pMysqlRow;
 		my_ulonglong	nRows;
 		unsigned int 	nFields;
-		const char*		strErr;
+		const char		*strErr, *s;
 		unsigned int	nErr;
 
 		pMysqlResult = mysql_store_result(m_pHandle);
@@ -765,7 +915,8 @@ result_t CDbMySql::queryRow(const char* strQuery, str_vector_t* pVector)
 						pVector->empty();
 						pVector->reserve(nFields);
 						for(size_t i=0; i<nFields; i++)  {
-							pVector->push_back(CString(pMysqlRow[i]));
+							s = pMysqlRow[i];
+							pVector->push_back(s != nullptr ? CString(s) : CString());
 						}
 					}
 					catch(const std::bad_alloc& exc)  {
@@ -785,7 +936,6 @@ result_t CDbMySql::queryRow(const char* strQuery, str_vector_t* pVector)
 
 					if ( nErr != 0 )  {
 						nresult = errMySql2Nr(nErr);
-						nresult = nresult == ENOMEM ? ENOMEM : EIO;
 
 						log_error(L_SQL, "[mysql] mysql_fetch_row() failed, query='%s', "
 										 "mysql error %d (%s)\n", strQuery, nErr, strErr);
@@ -808,19 +958,23 @@ result_t CDbMySql::queryRow(const char* strQuery, str_vector_t* pVector)
 			strErr = ::mysql_error(m_pHandle);
 			nErr = ::mysql_errno(m_pHandle);
 			nresult = errMySql2Nr(nErr);
-			nresult = nresult == ENOMEM ? ENOMEM : EIO;
 
 			log_error(L_SQL, "[mysql] mysql_store_result() failed, query='%s', "
 							 "mysql error %d (%s)\n", strQuery, nErr, strErr);
 		}
 	}
-	else {
-		if ( nresult == EEXIST ) nresult = EIO;
-	}
 
 	return nresult;
 }
 
+/*
+ * Start iterate query
+ *
+ * 		strQuery		sql query to iterate
+ * 		pResult			intermediate result
+ *
+ * Return: exception on error (nr=EEXIST,ENOENT,EIO,ENOMEM)
+ */
 void CDbMySql::iterate(const char* strQuery, CSqlResult* pResult) noexcept(false)
 {
 	CAutoLock		locker(m_lock);
@@ -933,7 +1087,7 @@ result_t CDbMySql::escapeSafe(const char* strQuery, CString& strOut)
 				break;
 			}
 
-			nresult = errMySql2Nr(nErr);
+			nresult = EIO;
 
 			log_debug(L_SQL, "[mysql] connection lost, trying to reconnect to %s\n",
 					  m_server.cs());
@@ -974,7 +1128,10 @@ void CDbMySql::escape(const char* strQuery, CString& strOut) noexcept(false)
  *
  * Return:
  * 		ESUCCESS		success
- * 		EIO				query failed
+ * 		ENODATA			query executed but returns no data
+ * 		EEXIST			query failed (duplicate key, etc)
+ * 		ENOENT			query failed (no such table, etc)
+ * 		EIO				query failed (I/O error)
  * 		ENOMEM			out of memory
  */
 result_t CDbMySql::recordInsert(const char* strQuery, const char* strTable, uint32_t* pId)
@@ -990,6 +1147,21 @@ result_t CDbMySql::recordInsert(const char* strQuery, const char* strTable, uint
 	return nresult;
 }
 
+/*
+ * Insert a new record to the table
+ *
+ * 		strQuery		inserting SQL query
+ * 		strTable		inserting table name
+ * 		pId				inserted record Id
+ *
+ * Return:
+ * 		ESUCCESS		success
+ * 		ENODATA			query executed but returns no data
+ * 		EEXIST			query failed (duplicate key, etc)
+ * 		ENOENT			query failed (no such table, etc)
+ * 		EIO				query failed (I/O error)
+ * 		ENOMEM			out of memory
+ */
 result_t CDbMySql::recordInsert(const char* strQuery, const char* strTable, uint64_t* pId)
 {
 	char		strBuf[128];
@@ -1003,7 +1175,6 @@ result_t CDbMySql::recordInsert(const char* strQuery, const char* strTable, uint
 		if ( nresult == ESUCCESS )  {
 			_tsnprintf(strBuf, sizeof(strBuf), "SELECT MAX(id) FROM %s", strTable);
 			nresult = queryValue(strBuf, &id);
-			nresult = nresult == ENODATA ? EIO : nresult; /* ENODATA => EIO */
 			if ( nresult == ESUCCESS )  {
 				*pId = id;
 			}

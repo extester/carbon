@@ -144,7 +144,6 @@ result_t CNetServerConnection::doRecv(hr_time_t htTimeout)
     if ( m_pSocket->isOpen() )  {
 		log_trace(L_NETSERV, "[netserv_con] receiving a container\n");
         nresult = pContainer->receive(*m_pSocket, htTimeout);
-
 		if ( nresult == ESUCCESS || nresult == ETIMEDOUT || nresult == ECANCELED )  {
 			m_bFailSent = FALSE;
 		}
